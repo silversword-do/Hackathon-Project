@@ -1,0 +1,171 @@
+.route-editor {
+  background: var(--surface);
+  padding: 1.5rem;
+  border-radius: 1rem;
+  box-shadow: var(--shadow);
+  margin-bottom: 1.5rem;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.route-editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.route-editor-header h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.25rem;
+}
+
+.delete-button {
+  padding: 0.5rem 1rem;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.delete-button:hover {
+  background: #c82333;
+  transform: translateY(-1px);
+}
+
+.route-editor-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group label {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.form-group input[type="text"] {
+  padding: 0.75rem;
+  border: 2px solid var(--border-color);
+  border-radius: 0.5rem;
+  background: var(--background);
+  color: var(--text-primary);
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.form-group input[type="text"]:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.form-group input[type="text"]:disabled {
+  background: var(--surface);
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.color-input-group {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.color-input-group input[type="color"] {
+  width: 60px;
+  height: 40px;
+  border: 2px solid var(--border-color);
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+
+.color-text-input {
+  flex: 1;
+}
+
+.stops-selection {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 2px solid var(--border-color);
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  background: var(--background);
+}
+
+.stop-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  cursor: pointer;
+  border-radius: 0.25rem;
+  transition: background-color 0.2s;
+}
+
+.stop-checkbox:hover {
+  background: var(--surface);
+}
+
+.stop-checkbox input[type="checkbox"] {
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+}
+
+.stop-checkbox span {
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.route-editor-actions {
+  display: flex;
+  gap: 1rem;
+  padding-top: 1rem;
+  border-top: 2px solid var(--border-color);
+}
+
+.save-button,
+.cancel-button {
+  flex: 1;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.save-button {
+  background: var(--primary-color);
+  color: white;
+}
+
+.save-button:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+}
+
+.cancel-button {
+  background: var(--background);
+  color: var(--text-primary);
+  border: 2px solid var(--border-color);
+}
+
+.cancel-button:hover {
+  background: var(--surface);
+  border-color: var(--primary-color);
+}
+

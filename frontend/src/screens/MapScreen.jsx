@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet'
-import { fetchOSURoutes, fetchOSUStops } from '../services/api'
+import { useAuth } from '../context/AuthContext'
+import { fetchOSURoutes, fetchOSUStops, saveOSURoutes } from '../services/api'
+import RouteEditor from '../components/RouteEditor'
 import './MapScreen.css'
 import 'leaflet/dist/leaflet.css'
 
@@ -59,6 +61,7 @@ function MapController({ center, zoom, bounds }) {
 }
 
 function MapScreen() {
+  const { isAdmin } = useAuth()
   const [routes, setRoutes] = useState([])
   const [stops, setStops] = useState([])
   const [selectedRoute, setSelectedRoute] = useState(null)
@@ -66,6 +69,9 @@ function MapScreen() {
   const [showStops, setShowStops] = useState(true)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [editingRoute, setEditingRoute] = useState(null)
+  const [showRouteEditor, setShowRouteEditor] = useState(false)
+  const [saveMessage, setSaveMessage] = useState(null)
 
   useEffect(() => {
     loadMapData()
@@ -93,6 +99,90 @@ function MapScreen() {
 
   const handleRouteSelect = (routeId) => {
     setSelectedRoute(selectedRoute === routeId ? null : routeId)
+  }
+
+  const handleEditRoute = (routeId) => {
+    const route = routes.find(r => r.route_id === routeId)
+    setEditingRoute(route || null)
+    setShowRouteEditor(true)
+  }
+
+  const handleAddRoute = () => {
+    setEditingRoute(null)
+    setShowRouteEditor(true)
+  }
+
+  const handleSaveRoute = async (routeData) => {
+    try {
+      let updatedRoutes
+      if (editingRoute) {
+        // Update existing route
+        updatedRoutes = routes.map(r =>
+          r.route_id === editingRoute.route_id ? routeData : r
+        )
+      } else {
+        // Add new route
+        updatedRoutes = [...routes, routeData]
+      }
+
+      setRoutes(updatedRoutes)
+      const success = await saveOSURoutes(updatedRoutes)
+      
+      if (success) {
+        setSaveMessage('Routes saved successfully!')
+        setShowRouteEditor(false)
+        setEditingRoute(null)
+        setTimeout(() => setSaveMessage(null), 3000)
+      } else {
+        setSaveMessage('Failed to save routes')
+        setTimeout(() => setSaveMessage(null), 3000)
+      }
+    } catch (error) {
+      console.error('Error saving route:', error)
+      setSaveMessage('Error saving route')
+      setTimeout(() => setSaveMessage(null), 3000)
+    }
+  }
+
+  const handleDeleteRoute = async (routeId) => {
+    if (window.confirm('Are you sure you want to delete this route?')) {
+      try {
+        const updatedRoutes = routes.filter(r => r.route_id !== routeId)
+        setRoutes(updatedRoutes)
+        const success = await saveOSURoutes(updatedRoutes)
+        
+        if (success) {
+          setSaveMessage('Route deleted successfully!')
+          setShowRouteEditor(false)
+          setEditingRoute(null)
+          setTimeout(() => setSaveMessage(null), 3000)
+        } else {
+          setSaveMessage('Failed to delete route')
+          setTimeout(() => setSaveMessage(null), 3000)
+        }
+      } catch (error) {
+        console.error('Error deleting route:', error)
+        setSaveMessage('Error deleting route')
+        setTimeout(() => setSaveMessage(null), 3000)
+      }
+    }
+  }
+
+  const handleSaveAll = async () => {
+    try {
+      const success = await saveOSURoutes(routes)
+      if (success) {
+        setSaveMessage('All routes saved successfully!')
+        setTimeout(() => setSaveMessage(null), 3000)
+      } else {
+        setSaveMessage('Failed to save routes')
+        setTimeout(() => setSaveMessage(null), 3000)
+      }
+    } catch (error) {
+      console.error('Error saving routes:', error)
+      setSaveMessage('Error saving routes')
+      setTimeout(() => setSaveMessage(null), 3000)
+    }
   }
 
 
@@ -134,8 +224,13 @@ function MapScreen() {
   return (
     <div className="map-screen">
       <div className="map-header">
-        <h1>OSU Bus Map</h1>
+        <h1>OSU Bus Map {isAdmin && <span className="admin-badge">Admin</span>}</h1>
         <p>Track buses and view OSU routes</p>
+        {saveMessage && (
+          <div className={`save-message ${saveMessage.includes('success') ? 'success' : 'error'}`}>
+            {saveMessage}
+          </div>
+        )}
       </div>
 
       <div className="map-controls-bar">
@@ -157,6 +252,22 @@ function MapScreen() {
         >
           Refresh Data
         </button>
+        {isAdmin && (
+          <>
+            <button
+              className="control-button admin-button"
+              onClick={handleAddRoute}
+            >
+              Add Route
+            </button>
+            <button
+              className="control-button admin-button save-all-button"
+              onClick={handleSaveAll}
+            >
+              Save All
+            </button>
+          </>
+        )}
       </div>
 
       <div className="map-layout">
@@ -242,6 +353,19 @@ function MapScreen() {
         </div>
 
         <div className="map-sidebar">
+          {isAdmin && showRouteEditor && (
+            <RouteEditor
+              route={editingRoute}
+              allStops={stops}
+              onSave={handleSaveRoute}
+              onCancel={() => {
+                setShowRouteEditor(false)
+                setEditingRoute(null)
+              }}
+              onDelete={handleDeleteRoute}
+            />
+          )}
+          
           <div className="sidebar-section">
             <h3>Bus Routes ({routes.length})</h3>
             <div className="route-list">
@@ -249,7 +373,7 @@ function MapScreen() {
                 <div
                   key={route.route_id}
                   className={`route-item ${selectedRoute === route.route_id ? 'selected' : ''}`}
-                  onClick={() => handleRouteSelect(route.route_id)}
+                  onClick={() => !isAdmin && handleRouteSelect(route.route_id)}
                 >
                   <div className="route-header">
                     <span
@@ -258,9 +382,28 @@ function MapScreen() {
                     ></span>
                     <span className="route-name">{route.name}</span>
                   </div>
-                  <span className="route-stops-count">
-                    {route.stops?.length || 0} stops
-                  </span>
+                  <div className="route-item-actions">
+                    <span className="route-stops-count">
+                      {route.stops?.length || 0} stops
+                    </span>
+                    {isAdmin && (
+                      <button
+                        className="edit-route-button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleEditRoute(route.route_id)
+                        }}
+                        title="Edit Route"
+                      >
+                        ✏️
+                      </button>
+                    )}
+                    {!isAdmin && (
+                      <span onClick={() => handleRouteSelect(route.route_id)} style={{ cursor: 'pointer' }}>
+                        {selectedRoute === route.route_id ? '▼' : '▶'}
+                      </span>
+                    )}
+                  </div>
                 </div>
               ))}
               {routes.length === 0 && (

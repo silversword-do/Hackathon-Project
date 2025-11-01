@@ -12,9 +12,13 @@ function LoginScreen() {
     e.preventDefault()
     setError('')
 
-    // Dummy account credentials
-    if (username === 'dummy' && password === '123') {
-      login()
+    // Admin account credentials
+    if (username === 'admin' && password === 'admin123') {
+      login('admin')
+    } 
+    // Regular user credentials
+    else if (username === 'dummy' && password === '123') {
+      login('user')
     } else {
       setError('Invalid username or password')
     }
@@ -66,7 +70,8 @@ function LoginScreen() {
 
         <div className="login-hint">
           <p>Demo credentials:</p>
-          <p>Username: <strong>dummy</strong> | Password: <strong>123</strong></p>
+          <p><strong>Admin:</strong> Username: <strong>admin</strong> | Password: <strong>admin123</strong></p>
+          <p><strong>User:</strong> Username: <strong>dummy</strong> | Password: <strong>123</strong></p>
         </div>
       </div>
     </div>
