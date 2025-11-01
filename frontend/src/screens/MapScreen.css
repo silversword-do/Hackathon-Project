@@ -1,8 +1,8 @@
 .map-screen {
   width: 100%;
-  height: 100%;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .map-header {
@@ -54,7 +54,9 @@
   grid-template-columns: 1fr 350px;
   gap: 1.5rem;
   flex: 1;
-  min-height: 0;
+  min-height: 500px;
+  max-height: calc(100vh - 280px);
+  overflow: hidden;
 }
 
 .map-container {
@@ -62,8 +64,14 @@
   border-radius: 1rem;
   box-shadow: var(--shadow);
   overflow: hidden;
-  min-height: 500px;
+  height: 100%;
   position: relative;
+  contain: layout style paint;
+}
+
+.map-container .leaflet-container {
+  height: 100% !important;
+  width: 100% !important;
 }
 
 .map-loading {
@@ -253,12 +261,14 @@
 /* Stop popup styles */
 .stop-popup {
   text-align: center;
+  min-width: 180px;
 }
 
 .stop-popup h3 {
   margin: 0 0 0.5rem 0;
-  color: var(--text-primary);
+  color: var(--osu-orange);
   font-size: 1.1rem;
+  font-weight: 700;
 }
 
 .stop-popup .stop-id {

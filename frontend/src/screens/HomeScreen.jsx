@@ -5,9 +5,12 @@ function HomeScreen() {
   return (
     <div className="home-screen">
       <div className="hero-section">
-        <h1>Welcome to Transit App</h1>
+        <div className="osu-logo-section">
+          <span className="pistol-pete-hero">🤠</span>
+          <h1>Welcome to OSU Transit App</h1>
+        </div>
         <p className="subtitle">
-          Your one-stop solution for bus transit information
+          Go Pokes! Your one-stop solution for bus transit information
         </p>
       </div>
 
@@ -19,9 +22,9 @@ function HomeScreen() {
         </div>
 
         <div className="feature-card">
-          <div className="feature-icon">🚌</div>
+          <div className="feature-icon">🤠🚌</div>
           <h3>Real-time Tracking</h3>
-          <p>Track buses in real-time with live location updates and accurate arrival estimates.</p>
+          <p>Track Pistol Pete's buses in real-time with live location updates and accurate arrival estimates.</p>
         </div>
 
         <div className="feature-card">

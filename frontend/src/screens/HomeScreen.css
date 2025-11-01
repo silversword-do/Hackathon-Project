@@ -8,16 +8,43 @@
   margin-bottom: 3rem;
 }
 
+.osu-logo-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.pistol-pete-hero {
+  font-size: 4rem;
+  filter: drop-shadow(0 4px 8px rgba(255, 102, 0, 0.4));
+  animation: wave 2s ease-in-out infinite;
+}
+
+@keyframes wave {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-10deg);
+  }
+  75% {
+    transform: rotate(10deg);
+  }
+}
+
 .hero-section h1 {
   font-size: 3rem;
   font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 1rem;
+  color: var(--osu-orange);
+  margin: 0;
 }
 
 .hero-section .subtitle {
   font-size: 1.25rem;
   color: var(--text-secondary);
+  font-weight: 500;
 }
 
 .features-grid {

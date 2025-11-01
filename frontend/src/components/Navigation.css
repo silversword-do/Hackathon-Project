@@ -1,5 +1,5 @@
 .navigation {
-  background-color: var(--surface);
+  background-color: var(--osu-black);
   box-shadow: var(--shadow);
   position: sticky;
   top: 0;
@@ -15,16 +15,33 @@
   align-items: center;
 }
 
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .nav-brand a {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--primary-color);
+  display: flex;
+  align-items: center;
   text-decoration: none;
-  transition: color 0.2s;
+  transition: opacity 0.2s;
 }
 
 .nav-brand a:hover {
-  color: var(--primary-hover);
+  opacity: 0.8;
+}
+
+.app-logo {
+  height: 50px;
+  width: auto;
+  object-fit: contain;
+}
+
+@media (max-width: 768px) {
+  .app-logo {
+    height: 40px;
+  }
 }
 
 .nav-links {
@@ -34,7 +51,7 @@
 }
 
 .nav-links a {
-  color: var(--text-primary);
+  color: var(--osu-white);
   text-decoration: none;
   font-weight: 500;
   padding: 0.5rem 1rem;
@@ -43,13 +60,13 @@
 }
 
 .nav-links a:hover {
-  background-color: var(--background);
-  color: var(--primary-color);
+  background-color: rgba(255, 102, 0, 0.2);
+  color: var(--osu-orange-light);
 }
 
 .nav-links a.active {
-  background-color: var(--primary-color);
-  color: white;
+  background-color: var(--osu-orange);
+  color: var(--osu-white);
 }
 
 @media (max-width: 768px) {

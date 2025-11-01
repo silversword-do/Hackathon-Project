@@ -20,20 +20,40 @@ const DefaultIcon = L.icon({
 
 L.Marker.prototype.options.icon = DefaultIcon
 
+
 // OSU Campus center coordinates (Stillwater, OK)
 const OSU_CAMPUS_CENTER = [36.1230, -97.0710]
 const MAP_ZOOM_LEVEL = 14
 const MAX_SIDEBAR_STOPS = 10
 
-// Component to center map on OSU campus
-function MapController({ center, zoom }) {
+// Map bounds to keep map within OSU campus area (Stillwater, OK)
+const MAP_BOUNDS = [
+  [36.0950, -97.0900], // Southwest corner
+  [36.1510, -97.0520]  // Northeast corner
+]
+
+// Component to center map on OSU campus and set bounds
+function MapController({ center, zoom, bounds }) {
   const map = useMap()
   
   useEffect(() => {
     if (center) {
       map.setView(center, zoom)
     }
-  }, [center, zoom, map])
+    if (bounds) {
+      map.setMaxBounds(bounds)
+      map.options.maxBoundsViscosity = 1.0 // Prevents dragging outside bounds
+    }
+  }, [center, zoom, bounds, map])
+  
+  // Handle window resize to prevent map issues
+  useEffect(() => {
+    const handleResize = () => {
+      map.invalidateSize()
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [map])
   
   return null
 }
@@ -55,6 +75,7 @@ function MapScreen() {
   const loadMapData = async () => {
     try {
       setLoading(true)
+      setError(null)
       const [routesData, stopsData] = await Promise.all([
         fetchOSURoutes(),
         fetchOSUStops()
@@ -62,7 +83,6 @@ function MapScreen() {
       
       setRoutes(routesData.routes || [])
       setStops(stopsData.stops || [])
-      setError(null)
     } catch (err) {
       console.error('Error loading map data:', err)
       setError('Failed to load map data. Please try again later.')
@@ -115,7 +135,7 @@ function MapScreen() {
     <div className="map-screen">
       <div className="map-header">
         <h1>OSU Bus Map</h1>
-        <p>Track buses and view OSU routes on the interactive map</p>
+        <p>Track buses and view OSU routes</p>
       </div>
 
       <div className="map-controls-bar">
@@ -146,27 +166,56 @@ function MapScreen() {
             zoom={MAP_ZOOM_LEVEL}
             style={{ height: '100%', width: '100%' }}
             scrollWheelZoom={true}
+            maxBounds={MAP_BOUNDS}
+            maxBoundsViscosity={1.0}
           >
-            <MapController center={OSU_CAMPUS_CENTER} zoom={MAP_ZOOM_LEVEL} />
+            <MapController center={OSU_CAMPUS_CENTER} zoom={MAP_ZOOM_LEVEL} bounds={MAP_BOUNDS} />
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
 
-            {/* Render routes */}
+            {/* Render routes with waypoints to follow streets */}
             {showRoutes && routes
               .filter(route => route.stops && route.stops.length > 0)
               .map((route) => {
-                const routeCoords = route.stops.map(stop => [stop.lat, stop.lon])
+                // Create route path with waypoints between stops to follow streets
+                const routePath = []
+                for (let i = 0; i < route.stops.length; i++) {
+                  const stop = route.stops[i]
+                  routePath.push([stop.lat, stop.lon])
+                  
+                  // Add intermediate waypoints between stops to follow street patterns
+                  if (i < route.stops.length - 1) {
+                    const nextStop = route.stops[i + 1]
+                    // Calculate midpoint
+                    const midLat = (stop.lat + nextStop.lat) / 2
+                    const midLon = (stop.lon + nextStop.lon) / 2
+                    
+                    // Add deterministic offset based on route direction to simulate street routing
+                    const latDiff = nextStop.lat - stop.lat
+                    const lonDiff = nextStop.lon - stop.lon
+                    // Perpendicular offset to simulate street grid
+                    const offsetLat = lonDiff * 0.3
+                    const offsetLon = -latDiff * 0.3
+                    
+                    const waypoint1 = [
+                      midLat + offsetLat,
+                      midLon + offsetLon
+                    ]
+                    routePath.push(waypoint1)
+                  }
+                }
+                
                 const isSelected = selectedRoute === route.route_id
 
                 return (
                   <Polyline
                     key={route.route_id}
-                    positions={routeCoords}
-                    color={route.color || '#007bff'}
+                    positions={routePath}
+                    color={route.color || '#FF6600'}
                     weight={isSelected ? 5 : 3}
-                    opacity={isSelected ? 0.8 : 0.5}
+                    opacity={isSelected ? 0.8 : 0.6}
                     eventHandlers={{
                       click: () => handleRouteSelect(route.route_id)
                     }}
@@ -174,7 +223,7 @@ function MapScreen() {
                 )
               })}
 
-            {/* Render stops */}
+            {/* Render stops with default markers */}
             {showStops && stops.map((stop) => (
               <Marker
                 key={stop.stop_id}
@@ -183,7 +232,7 @@ function MapScreen() {
                 <Popup>
                   <div className="stop-popup">
                     <h3>{stop.name}</h3>
-                    <p className="stop-id">ID: {stop.stop_id}</p>
+                    <p className="stop-id">Stop ID: {stop.stop_id}</p>
                     {stop.address && <p className="stop-address">{stop.address}</p>}
                   </div>
                 </Popup>

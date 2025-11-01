@@ -24,8 +24,9 @@ function LoginScreen() {
     <div className="login-screen">
       <div className="login-container">
         <div className="login-header">
-          <h1>Transit App</h1>
-          <p>Please sign in to continue</p>
+          <div className="pistol-pete-large">🤠</div>
+          <h1>OSU Transit App</h1>
+          <p>Go Pokes! Please sign in to continue</p>
         </div>
 
         <form onSubmit={handleSubmit} className="login-form">

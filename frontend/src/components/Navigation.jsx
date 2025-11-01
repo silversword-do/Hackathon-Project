@@ -10,7 +10,19 @@ function Navigation() {
     <nav className="navigation">
       <div className="nav-container">
         <div className="nav-brand">
-          <Link to="/">Transit App</Link>
+          <Link to="/">
+            <img 
+              src="/bus-logo.svg" 
+              alt="BUS OK STATE" 
+              className="app-logo"
+              onError={(e) => {
+                // Fallback if image doesn't load
+                e.target.style.display = 'none'
+                e.target.nextSibling.style.display = 'inline'
+              }}
+            />
+            <span style={{ display: 'none' }}>BUS OK STATE</span>
+          </Link>
         </div>
         <ul className="nav-links">
           <li>
