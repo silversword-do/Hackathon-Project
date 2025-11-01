@@ -11,6 +11,7 @@ from ..models.stop import Stop
 from ..models.schedule import Schedule
 from ..models.bus import Bus
 from datetime import timedelta, time
+from .mock_data import get_sample_routes, get_sample_buses, get_sample_schedules, search_sample_stops
 
 
 class TransitClient(APIAdapter):
@@ -26,11 +27,13 @@ class TransitClient(APIAdapter):
         super().__init__(api_key, api_url)
         self.api_config = api_config
         self.session = requests.Session()
+        self.use_mock_data = not self.is_configured()
     
     def _make_request(self, endpoint: str, params: dict = None) -> Optional[dict]:
         """Make HTTP request to API"""
         if not self.is_configured():
-            raise ValueError("API not configured. Please set API key in config.ini")
+            # Don't raise error - will use mock data instead
+            return None
         
         url = f"{self.api_url.rstrip('/')}/{endpoint.lstrip('/')}"
         headers = {
@@ -48,6 +51,10 @@ class TransitClient(APIAdapter):
     
     def get_routes(self, origin: str, destination: str) -> List[Route]:
         """Get available routes from origin to destination"""
+        # Use mock data if API is not configured
+        if self.use_mock_data:
+            return get_sample_routes(origin, destination)
+        
         # This is a placeholder implementation
         # Actual implementation depends on specific API structure
         params = {
@@ -77,6 +84,10 @@ class TransitClient(APIAdapter):
     
     def get_bus_locations(self, stop_id: str = None, route_id: str = None) -> List[Bus]:
         """Get real-time bus locations"""
+        # Use mock data if API is not configured
+        if self.use_mock_data:
+            return get_sample_buses(stop_id=stop_id, route_id=route_id)
+        
         params = {}
         if stop_id:
             params['stop_id'] = stop_id
@@ -104,6 +115,10 @@ class TransitClient(APIAdapter):
     
     def get_schedules(self, route_id: str, stop_id: str = None) -> List[Schedule]:
         """Get schedule information for a route"""
+        # Use mock data if API is not configured
+        if self.use_mock_data:
+            return get_sample_schedules(route_id, stop_id=stop_id)
+        
         params = {'route_id': route_id}
         if stop_id:
             params['stop_id'] = stop_id
@@ -129,6 +144,10 @@ class TransitClient(APIAdapter):
     
     def search_stops(self, query: str) -> List[Stop]:
         """Search for bus stops by name or location"""
+        # Use mock data if API is not configured
+        if self.use_mock_data:
+            return search_sample_stops(query)
+        
         params = {'q': query}
         
         data = self._make_request('/stops/search', params)

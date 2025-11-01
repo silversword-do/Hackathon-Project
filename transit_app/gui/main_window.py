@@ -83,8 +83,7 @@ class MainWindow:
         """Initialize transit API client"""
         try:
             self.transit_client = TransitClient(self.api_config)
-            if not self.api_config.is_configured():
-                self.status_bar.config(text="Warning: API not configured. Please set API key in Settings.")
+            # Client will automatically use mock data if API is not configured
         except Exception as e:
             messagebox.showerror("Error", f"Failed to initialize API client: {e}")
             self.transit_client = None
@@ -94,7 +93,7 @@ class MainWindow:
         if self.api_config.is_configured():
             self.status_bar.config(text="API Configured - Ready", foreground="green")
         else:
-            self.status_bar.config(text="API Not Configured - Please set API key in Settings", foreground="orange")
+            self.status_bar.config(text="Using Sample Data - Configure API in Settings for live data", foreground="blue")
     
     def _show_settings(self):
         """Show settings dialog for API configuration"""

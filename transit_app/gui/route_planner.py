@@ -91,7 +91,7 @@ class RoutePlanner:
             return
         
         if not self.transit_client:
-            messagebox.showerror("Error", "API client not initialized. Please configure API key in Settings.")
+            messagebox.showerror("Error", "API client not initialized.")
             return
         
         # Clear previous results

@@ -95,7 +95,7 @@ class ScheduleViewer:
             return
         
         if not self.transit_client:
-            messagebox.showerror("Error", "API client not initialized. Please configure API key in Settings.")
+            messagebox.showerror("Error", "API client not initialized.")
             return
         
         stop_id = self.stop_id_var.get().strip() or None
