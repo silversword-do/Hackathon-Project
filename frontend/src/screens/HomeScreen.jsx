@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import './HomeScreen.css'
 
 function HomeScreen() {
@@ -33,12 +34,12 @@ function HomeScreen() {
       <div className="quick-actions">
         <h2>Quick Actions</h2>
         <div className="action-buttons">
-          <a href="/map" className="action-button primary">
+          <Link to="/map" className="action-button primary">
             View Map
-          </a>
-          <a href="/settings" className="action-button secondary">
+          </Link>
+          <Link to="/settings" className="action-button secondary">
             Configure Settings
-          </a>
+          </Link>
         </div>
       </div>
     </div>
