@@ -170,6 +170,7 @@ This project was developed for the Hack OKState Hackathon by:
 - Alex Rockwood
 - Tristan Stuart
 - Ahmed Kulac
+- Nicolas Cooper
 
 ## License
 
