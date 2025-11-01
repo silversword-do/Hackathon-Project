@@ -1,39 +1,42 @@
-import { useState } from 'react'
-import './RouteEditor.css'
+import { useState } from "react";
+import "./RouteEditor.css";
 
 function RouteEditor({ route, onSave, onCancel, onDelete, allStops }) {
-  const [name, setName] = useState(route?.name || '')
-  const [routeId, setRouteId] = useState(route?.route_id || '')
-  const [color, setColor] = useState(route?.color || '#FF6600')
+  const [name, setName] = useState(route?.name || "");
+  const [routeId, setRouteId] = useState(route?.route_id || "");
+  const [color, setColor] = useState(route?.color || "#FF6600");
   const [selectedStops, setSelectedStops] = useState(
-    route?.stops?.map(s => s.stop_id) || []
-  )
+    route?.stops?.map((s) => s.stop_id) || []
+  );
 
   const handleSave = () => {
-    const stops = allStops.filter(s => selectedStops.includes(s.stop_id))
+    const stops = allStops.filter((s) => selectedStops.includes(s.stop_id));
     const routeData = {
       route_id: routeId || `ROUTE_${Date.now()}`,
       name,
       color,
-      stops: stops
-    }
-    onSave(routeData)
-  }
+      stops: stops,
+    };
+    onSave(routeData);
+  };
 
   const toggleStop = (stopId) => {
     if (selectedStops.includes(stopId)) {
-      setSelectedStops(selectedStops.filter(id => id !== stopId))
+      setSelectedStops(selectedStops.filter((id) => id !== stopId));
     } else {
-      setSelectedStops([...selectedStops, stopId])
+      setSelectedStops([...selectedStops, stopId]);
     }
-  }
+  };
 
   return (
     <div className="route-editor">
       <div className="route-editor-header">
-        <h3>{route ? 'Edit Route' : 'Add New Route'}</h3>
+        <h3>{route ? "Edit Route" : "Add New Route"}</h3>
         {route && onDelete && (
-          <button className="delete-button" onClick={() => onDelete(route.route_id)}>
+          <button
+            className="delete-button"
+            onClick={() => onDelete(route.route_id)}
+          >
             Delete
           </button>
         )}
@@ -82,7 +85,7 @@ function RouteEditor({ route, onSave, onCancel, onDelete, allStops }) {
         <div className="form-group">
           <label>Select Stops ({selectedStops.length} selected)</label>
           <div className="stops-selection">
-            {allStops.map(stop => (
+            {allStops.map((stop) => (
               <label key={stop.stop_id} className="stop-checkbox">
                 <input
                   type="checkbox"
@@ -97,7 +100,7 @@ function RouteEditor({ route, onSave, onCancel, onDelete, allStops }) {
 
         <div className="route-editor-actions">
           <button className="save-button" onClick={handleSave}>
-            {route ? 'Update Route' : 'Create Route'}
+            {route ? "Update Route" : "Create Route"}
           </button>
           <button className="cancel-button" onClick={onCancel}>
             Cancel
@@ -105,8 +108,7 @@ function RouteEditor({ route, onSave, onCancel, onDelete, allStops }) {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
-export default RouteEditor
-
+export default RouteEditor;
