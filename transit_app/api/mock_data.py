@@ -1,6 +1,5 @@
 """
 Mock data for testing without API
-Uses OSU GTFS data when available, falls back to sample data
 """
 
 from typing import List
@@ -9,19 +8,6 @@ from ..models.route import Route
 from ..models.stop import Stop
 from ..models.schedule import Schedule
 from ..models.bus import Bus
-
-# Try to import OSU data
-try:
-    from .osu_data import (
-        get_osu_routes_for_origin_destination,
-        get_osu_stops,
-        search_osu_stops,
-        get_osu_schedules,
-        load_osu_data
-    )
-    USE_OSU_DATA = True
-except ImportError:
-    USE_OSU_DATA = False
 
 
 # Sample stops
@@ -39,22 +25,7 @@ SAMPLE_STOPS = [
 
 # Sample routes
 def get_sample_routes(origin: str, destination: str) -> List[Route]:
-    """
-    Get routes based on origin and destination
-    Uses OSU GTFS data if available, otherwise generates sample routes
-    """
-    # Try to use OSU data first
-    if USE_OSU_DATA:
-        try:
-            # Try to load OSU data if not already loaded
-            load_osu_data()
-            osu_routes = get_osu_routes_for_origin_destination(origin, destination)
-            if osu_routes:
-                return osu_routes
-        except Exception as e:
-            print(f"Warning: Could not load OSU data, using sample routes: {e}")
-    
-    # Fallback to sample routes
+    """Generate sample routes based on origin and destination"""
     routes = []
     
     # Find matching stops or use defaults
@@ -184,20 +155,7 @@ def get_sample_buses(stop_id: str = None, route_id: str = None) -> List[Bus]:
 
 
 def get_sample_schedules(route_id: str, stop_id: str = None) -> List[Schedule]:
-    """
-    Get schedules for a route
-    Uses OSU GTFS data if available, otherwise generates sample schedules
-    """
-    # Try to use OSU data first
-    if USE_OSU_DATA:
-        try:
-            osu_schedules = get_osu_schedules(route_id, stop_id)
-            if osu_schedules:
-                return osu_schedules
-        except Exception as e:
-            print(f"Warning: Could not load OSU schedules, using sample schedules: {e}")
-    
-    # Fallback to sample schedules
+    """Generate sample schedules"""
     schedules = []
     
     from ..models.route import Route
@@ -227,20 +185,7 @@ def get_sample_schedules(route_id: str, stop_id: str = None) -> List[Schedule]:
 
 
 def search_sample_stops(query: str) -> List[Stop]:
-    """
-    Search stops by query
-    Uses OSU GTFS data if available, otherwise searches sample stops
-    """
-    # Try to use OSU data first
-    if USE_OSU_DATA:
-        try:
-            osu_results = search_osu_stops(query)
-            if osu_results:
-                return osu_results
-        except Exception as e:
-            print(f"Warning: Could not search OSU stops, using sample stops: {e}")
-    
-    # Fallback to sample stops
+    """Search sample stops by query"""
     query_lower = query.lower()
     results = []
     
