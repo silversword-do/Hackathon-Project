@@ -1,7 +1,9 @@
 import { useState } from 'react'
+import { useAuth } from '../context/AuthContext'
 import './SettingsScreen.css'
 
 function SettingsScreen() {
+  const { logout } = useAuth()
   const [settings, setSettings] = useState({
     apiKey: '',
     apiUrl: '',
@@ -132,6 +134,19 @@ function SettingsScreen() {
               />
               <span>Enable Notifications</span>
             </label>
+          </div>
+        </div>
+
+        <div className="settings-section">
+          <h2>Account</h2>
+          <div className="form-group">
+            <button 
+              type="button" 
+              onClick={logout} 
+              className="button button-logout"
+            >
+              Log Out
+            </button>
           </div>
         </div>
 
