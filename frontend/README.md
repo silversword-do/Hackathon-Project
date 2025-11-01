@@ -1,12 +1,13 @@
 # Transit App Frontend
 
-React frontend application for the Transit App with three main screens: Home, Map, and Settings.
+React frontend application for the Transit App with authentication and three main screens: Home, Map, and Settings.
 
 ## Features
 
+- **Login Screen**: Secure authentication with demo credentials
 - **Home Screen**: Welcome page with feature overview and quick actions
 - **Map Screen**: Interactive map view for tracking buses and viewing routes
-- **Settings Screen**: Configuration for API settings and app preferences
+- **Settings Screen**: Configuration for API settings, app preferences, and logout
 
 ## Setup
 
@@ -53,11 +54,13 @@ npm run preview
 
 ```
 frontend/
-├── public/           # Static assets
 ├── src/
 │   ├── components/   # Reusable components
 │   │   └── Navigation.jsx
+│   ├── context/      # Context providers
+│   │   └── AuthContext.jsx
 │   ├── screens/     # Main screen components
+│   │   ├── LoginScreen.jsx
 │   │   ├── HomeScreen.jsx
 │   │   ├── MapScreen.jsx
 │   │   └── SettingsScreen.jsx
@@ -75,6 +78,14 @@ frontend/
 - **React Router DOM** - Navigation and routing
 - **Vite** - Build tool and dev server
 - **CSS** - Styling with CSS variables for theming
+
+## Authentication
+
+The app uses a simple authentication system with demo credentials:
+- **Username**: `dummy`
+- **Password**: `123`
+
+Authentication state is persisted in localStorage.
 
 ## Notes
 
