@@ -29,12 +29,12 @@ export async function getRoutePath(start, end) {
   const endLng = end.lon !== undefined ? end.lon : end.lng
   
   // Validate coordinates
-  if (!start.lat || startLng === undefined || !end.lat || endLng === undefined) {
+  if (start.lat === undefined || start.lat === null || startLng === undefined || end.lat === undefined || end.lat === null || endLng === undefined) {
     console.error('Invalid coordinates for routing', { start, end })
     // Return empty array or valid fallback
     const fallbackPath = [
-      ...(start.lat && startLng !== undefined ? [[start.lat, startLng]] : []),
-      ...(end.lat && endLng !== undefined ? [[end.lat, endLng]] : [])
+      ...(start.lat !== undefined && start.lat !== null && startLng !== undefined ? [[start.lat, startLng]] : []),
+      ...(end.lat !== undefined && end.lat !== null && endLng !== undefined ? [[end.lat, endLng]] : [])
     ]
     return fallbackPath.length > 0 ? fallbackPath : [[start.lat || 0, startLng || 0], [end.lat || 0, endLng || 0]]
   }
@@ -94,7 +94,7 @@ export async function getRoutePathForStops(stops) {
   if (!stops || stops.length < 2) {
     // Handle empty or single stop
     if (!stops || stops.length === 0) return []
-    return stops.map(stop => [stop.lat, stop.lon || stop.lng])
+    return stops.map(stop => [stop.lat, stop.lon !== undefined ? stop.lon : stop.lng])
   }
 
   try {
@@ -106,11 +106,11 @@ export async function getRoutePathForStops(stops) {
       const end = stops[i + 1]
       
       // Support both 'lon' and 'lng' property names for compatibility
-      const startLng = start.lon || start.lng
-      const endLng = end.lon || end.lng
+      const startLng = start.lon !== undefined ? start.lon : start.lng
+      const endLng = end.lon !== undefined ? end.lon : end.lng
       
       // Validate coordinates
-      if (!start.lat || startLng === undefined || !end.lat || endLng === undefined) {
+      if (start.lat === undefined || start.lat === null || startLng === undefined || end.lat === undefined || end.lat === null || endLng === undefined) {
         console.warn('Invalid stop coordinates, skipping segment', { start, end })
         continue
       }
@@ -134,11 +134,11 @@ export async function getRoutePathForStops(stops) {
       }
     }
     
-    return fullPath.length > 0 ? fullPath : stops.map(stop => [stop.lat, stop.lon || stop.lng])
+    return fullPath.length > 0 ? fullPath : stops.map(stop => [stop.lat, stop.lon !== undefined ? stop.lon : stop.lng])
   } catch (error) {
     console.error('Error getting route path for stops:', error)
     // Fall back to straight lines
-    return stops.map(stop => [stop.lat, stop.lon || stop.lng])
+    return stops.map(stop => [stop.lat, stop.lon !== undefined ? stop.lon : stop.lng])
   }
 }
 

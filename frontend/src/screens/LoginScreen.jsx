@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import "./LoginScreen.css";
 
@@ -7,13 +8,16 @@ function LoginScreen() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const { login, signup } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setSuccess("");
     setLoading(true);
 
     try {
@@ -32,13 +36,27 @@ function LoginScreen() {
         }
 
         const result = await signup(email, password);
-        if (!result.success) {
+        if (result.success) {
+          setSuccess("Account created successfully! Redirecting...");
+          // Navigation will happen automatically when isAuthenticated becomes true
+          // via the onAuthStateChanged listener, but we can navigate immediately for better UX
+          setTimeout(() => {
+            navigate("/");
+          }, 500);
+        } else {
           setError(result.error);
         }
       } else {
         // Sign in
         const result = await login(email, password);
-        if (!result.success) {
+        if (result.success) {
+          setSuccess("Signed in successfully! Redirecting...");
+          // Navigation will happen automatically when isAuthenticated becomes true
+          // via the onAuthStateChanged listener, but we can navigate immediately for better UX
+          setTimeout(() => {
+            navigate("/");
+          }, 500);
+        } else {
           setError(result.error);
         }
       }
@@ -52,6 +70,7 @@ function LoginScreen() {
   const toggleMode = () => {
     setIsSignUp(!isSignUp);
     setError("");
+    setSuccess("");
     setPassword("");
     setConfirmPassword("");
   };
@@ -67,6 +86,7 @@ function LoginScreen() {
 
         <form onSubmit={handleSubmit} className="login-form">
           {error && <div className="error-message">{error}</div>}
+          {success && <div className="success-message">{success}</div>}
 
           <div className="form-group">
             <label htmlFor="email">Email</label>
