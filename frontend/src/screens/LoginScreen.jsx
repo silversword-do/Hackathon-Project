@@ -1,41 +1,41 @@
-import { useState } from 'react'
-import { useAuth } from '../context/AuthContext'
-import './LoginScreen.css'
+import { useState } from "react";
+import { useAuth } from "../context/AuthContext";
+import "./LoginScreen.css";
 
 function LoginScreen() {
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const { login } = useAuth()
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const { login } = useAuth();
 
   const handleSubmit = (e) => {
-    e.preventDefault()
-    setError('')
+    e.preventDefault();
+    setError("");
 
     // Admin account credentials
-    if (username === 'admin' && password === 'admin123') {
-      login('admin')
-    } 
-    // Regular user credentials
-    else if (username === 'dummy' && password === '123') {
-      login('user')
-    } else {
-      setError('Invalid username or password')
+    if (username === "admin" && password === "admin123") {
+      login("admin");
     }
-  }
+    // Regular user credentials
+    else if (username === "dummy" && password === "123") {
+      login("user");
+    } else {
+      setError("Invalid username or password");
+    }
+  };
 
   return (
     <div className="login-screen">
       <div className="login-container">
         <div className="login-header">
-          <div className="pistol-pete-large">🤠</div>
+          <div className="pistol-pete-large"></div>
           <h1>OSU Transit App</h1>
           <p>Go Pokes! Please sign in to continue</p>
         </div>
 
         <form onSubmit={handleSubmit} className="login-form">
           {error && <div className="error-message">{error}</div>}
-          
+
           <div className="form-group">
             <label htmlFor="username">Username</label>
             <input
@@ -70,13 +70,18 @@ function LoginScreen() {
 
         <div className="login-hint">
           <p>Demo credentials:</p>
-          <p><strong>Admin:</strong> Username: <strong>admin</strong> | Password: <strong>admin123</strong></p>
-          <p><strong>User:</strong> Username: <strong>dummy</strong> | Password: <strong>123</strong></p>
+          <p>
+            <strong>Admin:</strong> Username: <strong>admin</strong> | Password:{" "}
+            <strong>admin123</strong>
+          </p>
+          <p>
+            <strong>User:</strong> Username: <strong>dummy</strong> | Password:{" "}
+            <strong>123</strong>
+          </p>
         </div>
       </div>
     </div>
-  )
+  );
 }
 
-export default LoginScreen
-
+export default LoginScreen;
