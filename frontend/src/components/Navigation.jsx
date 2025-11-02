@@ -37,6 +37,14 @@ function Navigation() {
           </li>
           <li>
             <Link
+              to="/schedule"
+              className={isActive("/schedule") ? "active" : ""}
+            >
+              Class Schedule
+            </Link>
+          </li>
+          <li>
+            <Link
               to="/settings"
               className={isActive("/settings") ? "active" : ""}
             >

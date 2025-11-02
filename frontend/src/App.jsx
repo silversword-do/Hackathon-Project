@@ -5,6 +5,7 @@ import LoginScreen from './screens/LoginScreen'
 import HomeScreen from './screens/HomeScreen'
 import MapScreen from './screens/MapScreen'
 import SettingsScreen from './screens/SettingsScreen'
+import ClassScheduleScreen from './screens/ClassScheduleScreen'
 import './App.css'
 
 function AppRoutes() {
@@ -26,6 +27,7 @@ function AppRoutes() {
         <Routes>
           <Route path="/" element={<HomeScreen />} />
           <Route path="/map" element={<MapScreen />} />
+          <Route path="/schedule" element={<ClassScheduleScreen />} />
           <Route path="/settings" element={<SettingsScreen />} />
           <Route path="/login" element={<Navigate to="/" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />

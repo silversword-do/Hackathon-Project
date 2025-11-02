@@ -286,37 +286,13 @@ function MapScreen() {
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
 
-            {/* Render routes with waypoints to follow streets */}
+            {/* Render routes connecting markers only (no intermediate waypoints through buildings) */}
             {showRoutes && routes
               .filter(route => route.stops && route.stops.length > 0)
               .map((route) => {
-                // Create route path with waypoints between stops to follow streets
-                const routePath = []
-                for (let i = 0; i < route.stops.length; i++) {
-                  const stop = route.stops[i]
-                  routePath.push([stop.lat, stop.lon])
-                  
-                  // Add intermediate waypoints between stops to follow street patterns
-                  if (i < route.stops.length - 1) {
-                    const nextStop = route.stops[i + 1]
-                    // Calculate midpoint
-                    const midLat = (stop.lat + nextStop.lat) / 2
-                    const midLon = (stop.lon + nextStop.lon) / 2
-                    
-                    // Add deterministic offset based on route direction to simulate street routing
-                    const latDiff = nextStop.lat - stop.lat
-                    const lonDiff = nextStop.lon - stop.lon
-                    // Perpendicular offset to simulate street grid
-                    const offsetLat = lonDiff * 0.3
-                    const offsetLon = -latDiff * 0.3
-                    
-                    const waypoint1 = [
-                      midLat + offsetLat,
-                      midLon + offsetLon
-                    ]
-                    routePath.push(waypoint1)
-                  }
-                }
+                // Create route path connecting only markers (stops) - no intermediate waypoints
+                // Routes only follow streets connecting markers, not through buildings
+                const routePath = route.stops.map(stop => [stop.lat, stop.lon])
                 
                 const isSelected = selectedRoute === route.route_id
 

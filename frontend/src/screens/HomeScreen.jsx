@@ -52,6 +52,15 @@ function HomeScreen() {
             advance.
           </p>
         </div>
+
+        <div className="feature-card">
+          <div className="feature-icon"></div>
+          <h3>Class Schedule</h3>
+          <p>
+            Manage your class schedule organized by the closest bus stop to each
+            building for easy transit planning.
+          </p>
+        </div>
       </div>
 
       <div className="quick-actions">
@@ -59,6 +68,9 @@ function HomeScreen() {
         <div className="action-buttons">
           <Link to="/map" className="action-button primary">
             View Map
+          </Link>
+          <Link to="/schedule" className="action-button primary">
+            My Class Schedule
           </Link>
           <Link to="/settings" className="action-button secondary">
             Configure Settings
