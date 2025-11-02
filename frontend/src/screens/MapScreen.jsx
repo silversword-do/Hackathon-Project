@@ -243,17 +243,20 @@ function MapScreen() {
   const handleDeleteRoute = async (routeId) => {
     if (window.confirm('Are you sure you want to delete this route?')) {
       try {
-        const updatedRoutes = routes.filter(r => r.route_id !== routeId)
-        setRoutes(updatedRoutes)
+        // Delete from Firebase first
+        const { deleteRoute } = await import('../services/api')
+        const deleteSuccess = await deleteRoute(routeId)
         
-        // Remove route path from state
-        const newRoutePaths = { ...routePaths }
-        delete newRoutePaths[routeId]
-        setRoutePaths(newRoutePaths)
-        
-        const success = await saveOSURoutes(updatedRoutes)
-        
-        if (success) {
+        if (deleteSuccess) {
+          // Update local state
+          const updatedRoutes = routes.filter(r => r.route_id !== routeId)
+          setRoutes(updatedRoutes)
+          
+          // Remove route path from state
+          const newRoutePaths = { ...routePaths }
+          delete newRoutePaths[routeId]
+          setRoutePaths(newRoutePaths)
+          
           setSaveMessage('Route deleted successfully!')
           setShowRouteEditor(false)
           setEditingRoute(null)
