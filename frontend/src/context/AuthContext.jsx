@@ -5,10 +5,36 @@ import {
   signOut,
   onAuthStateChanged
 } from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { auth, db } from "../services/firebase";
 
 const AuthContext = createContext();
+
+// Admin email patterns - users with these emails will automatically get admin role
+const ADMIN_EMAILS = [
+  "admin",
+  "admin@",
+  "@admin",
+  "nic.cooper.999@gmail.com" // Add specific admin emails here
+];
+
+// Check if an email should be admin
+function isAdminEmail(email) {
+  if (!email) return false;
+  const emailLower = email.toLowerCase();
+  
+  // Check exact matches
+  if (ADMIN_EMAILS.some(pattern => emailLower.includes(pattern.toLowerCase()))) {
+    return true;
+  }
+  
+  // Check if email contains "admin" as a word
+  if (emailLower.includes("admin") || emailLower.startsWith("admin")) {
+    return true;
+  }
+  
+  return false;
+}
 
 export function AuthProvider({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -32,15 +58,27 @@ export function AuthProvider({ children }) {
           
           if (userDoc.exists()) {
             const userData = userDoc.data();
-            setUserRole(userData.role || "user");
+            let role = userData.role || "user";
+            
+            // Auto-promote to admin if email matches admin pattern and not already admin
+            if (!role || role === "user") {
+              if (isAdminEmail(firebaseUser.email)) {
+                role = "admin";
+                // Update the role in Firestore
+                await updateDoc(userDocRef, { role: "admin" });
+              }
+            }
+            
+            setUserRole(role);
           } else {
             // Create user document if it doesn't exist
+            const defaultRole = isAdminEmail(firebaseUser.email) ? "admin" : "user";
             await setDoc(userDocRef, {
               email: firebaseUser.email,
-              role: "user",
+              role: defaultRole,
               createdAt: new Date(),
             });
-            setUserRole("user");
+            setUserRole(defaultRole);
           }
         } catch (error) {
           console.error("Error fetching user data:", error);
@@ -72,14 +110,17 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const signup = async (email, password, role = "user") => {
+  const signup = async (email, password, role = null) => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      
+      // Determine role: use provided role, or check if admin email, or default to user
+      const finalRole = role || (isAdminEmail(email) ? "admin" : "user");
       
       // Create user document in Firestore
       await setDoc(doc(db, "users", userCredential.user.uid), {
         email: email,
-        role: role,
+        role: finalRole,
         createdAt: new Date(),
       });
       
@@ -110,6 +151,24 @@ export function AuthProvider({ children }) {
     }
   };
 
+  // Function to update user role (admin only function, can be called from admin panel)
+  const updateUserRole = async (userId, newRole) => {
+    try {
+      const userDocRef = doc(db, "users", userId);
+      await updateDoc(userDocRef, { role: newRole });
+      
+      // If updating current user's role, update local state
+      if (user && user.uid === userId) {
+        setUserRole(newRole);
+      }
+      
+      return { success: true };
+    } catch (error) {
+      console.error("Error updating user role:", error);
+      return { success: false, error: error.message };
+    }
+  };
+
   const value = {
     isAuthenticated,
     userRole,
@@ -119,6 +178,7 @@ export function AuthProvider({ children }) {
     login,
     signup,
     logout,
+    updateUserRole,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
