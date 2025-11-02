@@ -25,6 +25,7 @@
     "@capacitor/ios": "^7.4.4",
     "@capacitor/splash-screen": "^7.0.3",
     "@capacitor/status-bar": "^7.0.3",
+    "@dataconnect/generated": "file:src/dataconnect-generated",
     "firebase": "^12.5.0",
     "leaflet": "^1.9.4",
     "react": "^18.2.0",
