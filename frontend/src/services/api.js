@@ -13,6 +13,75 @@ import {
 // Backend API URL - update when backend API is implemented
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
+// Oklahoma state boundaries (approximate)
+// Latitude: 33.6° to 37.0° N
+// Longitude: -103.0° to -94.4° W
+const OKLAHOMA_BOUNDS = {
+  minLat: 33.6,
+  maxLat: 37.0,
+  minLon: -103.0,
+  maxLon: -94.4
+}
+
+/**
+ * Check if a coordinate is within Oklahoma state boundaries
+ * @param {number} lat - Latitude
+ * @param {number} lon - Longitude
+ * @returns {boolean}
+ */
+function isInOklahoma(lat, lon) {
+  if (lat === undefined || lat === null || lon === undefined || lon === null) {
+    return false
+  }
+  return lat >= OKLAHOMA_BOUNDS.minLat && 
+         lat <= OKLAHOMA_BOUNDS.maxLat &&
+         lon >= OKLAHOMA_BOUNDS.minLon &&
+         lon <= OKLAHOMA_BOUNDS.maxLon
+}
+
+/**
+ * Filter stops to only include those in Oklahoma
+ * @param {Array} stops - Array of stop objects
+ * @returns {Array} Filtered stops
+ */
+function filterOklahomaStops(stops) {
+  if (!stops || stops.length === 0) return []
+  
+  return stops.filter(stop => {
+    // Check main stop location
+    const stopLon = stop.lon !== undefined ? stop.lon : stop.lng
+    if (stop.lat !== undefined && stop.lat !== null && stopLon !== undefined && stopLon !== null) {
+      return isInOklahoma(stop.lat, stopLon)
+    }
+    return false
+  })
+}
+
+/**
+ * Filter routes to only include those with stops in Oklahoma
+ * @param {Array} routes - Array of route objects
+ * @returns {Array} Filtered routes
+ */
+function filterOklahomaRoutes(routes) {
+  if (!routes || routes.length === 0) return []
+  
+  return routes.map(route => {
+    // Filter stops within route to only Oklahoma stops
+    if (route.stops && Array.isArray(route.stops)) {
+      const filteredStops = filterOklahomaStops(route.stops)
+      // Only include route if it has at least one stop in Oklahoma
+      if (filteredStops.length > 0) {
+        return {
+          ...route,
+          stops: filteredStops
+        }
+      }
+      return null // Route has no stops in Oklahoma
+    }
+    return route // Route has no stops defined, keep it
+  }).filter(route => route !== null) // Remove null routes
+}
+
 // Default routes if none are saved in Firebase
 const DEFAULT_ROUTES = [
   {
@@ -60,21 +129,28 @@ export async function fetchOSURoutes() {
     // Try to fetch routes from Firebase
     const firebaseRoutes = await fetchRoutesFromFirebase()
     
+    let routes = []
     if (firebaseRoutes && firebaseRoutes.length > 0) {
       // Remove the 'id' field that Firestore adds and use route_id instead
-      const routes = firebaseRoutes.map(route => {
+      routes = firebaseRoutes.map(route => {
         const { id, ...routeData } = route
         return routeData
       })
-      return { routes }
+    } else {
+      // Fallback to default routes if Firebase is empty
+      routes = DEFAULT_ROUTES
     }
     
-    // Fallback to default routes if Firebase is empty
-    return { routes: DEFAULT_ROUTES }
+    // Filter to only include routes/stops within Oklahoma
+    const filteredRoutes = filterOklahomaRoutes(routes)
+    console.log(`Filtered routes: ${routes.length} -> ${filteredRoutes.length} (Oklahoma only)`)
+    
+    return { routes: filteredRoutes }
   } catch (error) {
     console.error('Error fetching routes from Firebase:', error)
-    // Fallback to default routes on error
-    return { routes: DEFAULT_ROUTES }
+    // Fallback to default routes on error, still filter them
+    const filteredRoutes = filterOklahomaRoutes(DEFAULT_ROUTES)
+    return { routes: filteredRoutes }
   }
 }
 
@@ -146,16 +222,25 @@ const DEFAULT_STOPS = [
 export async function fetchOSUStops() {
   try {
     // Try to load saved stops first
+    let stops = []
     const savedStops = loadStops()
     if (savedStops && savedStops.length > 0) {
-      return { stops: savedStops }
+      stops = savedStops
+    } else {
+      // Fallback to default stops
+      stops = DEFAULT_STOPS
     }
     
-    // Fallback to default stops
-    return { stops: DEFAULT_STOPS }
+    // Filter to only include stops within Oklahoma
+    const filteredStops = filterOklahomaStops(stops)
+    console.log(`Filtered stops: ${stops.length} -> ${filteredStops.length} (Oklahoma only)`)
+    
+    return { stops: filteredStops }
   } catch (error) {
     console.error('Error fetching stops:', error)
-    return { stops: DEFAULT_STOPS }
+    // Still filter default stops
+    const filteredStops = filterOklahomaStops(DEFAULT_STOPS)
+    return { stops: filteredStops }
   }
 }
 

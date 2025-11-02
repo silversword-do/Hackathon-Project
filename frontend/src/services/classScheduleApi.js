@@ -3,6 +3,7 @@
  */
 
 import { loadClassSchedule, saveClassSchedule } from './classScheduleStorage'
+import { fetchUserSchedule, saveUserSchedule } from './firebaseUserSchedules'
 
 /**
  * Calculate distance between two coordinates (Haversine formula)
@@ -54,29 +55,60 @@ export function findClosestMarker(buildingLat, buildingLon, stops) {
 
 /**
  * Fetch class schedule
+ * @param {string} userId - Optional Firebase user ID. If provided, fetches from Firestore. Otherwise uses localStorage.
  * @returns {Promise<{classes: Array}>}
  */
-export async function fetchClassSchedule() {
+export async function fetchClassSchedule(userId = null) {
   try {
+    // If userId is provided, fetch from Firestore
+    if (userId) {
+      const classes = await fetchUserSchedule(userId)
+      return { classes }
+    }
+    
+    // Otherwise fallback to localStorage
     const classes = loadClassSchedule()
     return { classes }
   } catch (error) {
     console.error('Error fetching class schedule:', error)
-    return { classes: [] }
+    // Fallback to localStorage if Firebase fails
+    try {
+      const classes = loadClassSchedule()
+      return { classes }
+    } catch (localError) {
+      console.error('Error loading from localStorage:', localError)
+      return { classes: [] }
+    }
   }
 }
 
 /**
  * Save class schedule
  * @param {Array} classes - Classes to save
+ * @param {string} userId - Optional Firebase user ID. If provided, saves to Firestore. Otherwise uses localStorage.
  * @returns {Promise<boolean>}
  */
-export async function saveClassScheduleData(classes) {
+export async function saveClassScheduleData(classes, userId = null) {
   try {
+    // If userId is provided, save to Firestore
+    if (userId) {
+      const success = await saveUserSchedule(userId, classes)
+      // Also save to localStorage as backup
+      saveClassSchedule(classes)
+      return success
+    }
+    
+    // Otherwise use localStorage
     return saveClassSchedule(classes)
   } catch (error) {
     console.error('Error saving class schedule:', error)
-    return false
+    // Fallback to localStorage if Firebase fails
+    try {
+      return saveClassSchedule(classes)
+    } catch (localError) {
+      console.error('Error saving to localStorage:', localError)
+      return false
+    }
   }
 }
 

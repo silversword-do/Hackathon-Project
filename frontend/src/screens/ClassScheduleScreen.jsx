@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useAuth } from '../context/AuthContext'
 import { fetchClassSchedule, saveClassScheduleData, matchClassesToMarkers } from '../services/classScheduleApi'
 import { fetchOSUStops } from '../services/api'
 import './ClassScheduleScreen.css'
@@ -21,6 +22,7 @@ const OSU_BUILDINGS = {
 }
 
 function ClassScheduleScreen() {
+  const { user } = useAuth()
   const [classes, setClasses] = useState([])
   const [stops, setStops] = useState([])
   const [matchedClasses, setMatchedClasses] = useState([])
@@ -43,7 +45,7 @@ function ClassScheduleScreen() {
 
   useEffect(() => {
     loadData()
-  }, [])
+  }, [user])
 
   useEffect(() => {
     if (classes.length > 0) {
@@ -60,8 +62,9 @@ function ClassScheduleScreen() {
     try {
       setLoading(true)
       setError(null)
+      const userId = user?.uid || null
       const [scheduleData, stopsData] = await Promise.all([
-        fetchClassSchedule(),
+        fetchClassSchedule(userId),
         fetchOSUStops()
       ])
       
@@ -139,7 +142,8 @@ function ClassScheduleScreen() {
 
   const handleSave = async (classesToSave = classes) => {
     try {
-      const success = await saveClassScheduleData(classesToSave)
+      const userId = user?.uid || null
+      const success = await saveClassScheduleData(classesToSave, userId)
       if (success) {
         setSaveMessage('Class schedule saved successfully!')
         setTimeout(() => setSaveMessage(null), 3000)
