@@ -8,7 +8,7 @@ function HomeScreen() {
         <div className="osu-logo-section">
           <span className="pistol-pete-logo">
             <img
-              src="/bus-logo.png"
+              src="/site-logo.png"
               alt="BUS OK STATE"
               style={{
                 width: "128px", // or "64px" for a smaller icon

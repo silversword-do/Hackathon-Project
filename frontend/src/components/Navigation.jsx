@@ -14,7 +14,7 @@ function Navigation() {
           <div className="nav-brand">
             <Link to="/">
               <img
-                src="/bus-logo.png"
+                src="/site-logo.png"
                 alt="BUS OK STATE"
                 className="app-logo"
                 onError={(e) => {
