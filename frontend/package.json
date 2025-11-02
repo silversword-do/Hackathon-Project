@@ -13,7 +13,9 @@
     "cap:copy": "npx cap copy",
     "cap:open:ios": "npx cap open ios",
     "cap:open:android": "npx cap open android",
-    "cap:build": "npm run build && npx cap sync"
+    "cap:build": "npm run build && npx cap sync",
+    "deploy": "npm run build && firebase deploy --only hosting",
+    "deploy:hosting": "firebase deploy --only hosting"
   },
   "dependencies": {
     "@capacitor/android": "^7.4.4",
