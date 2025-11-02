@@ -1,8 +1,10 @@
 import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import "./Navigation.css";
 
 function Navigation() {
   const location = useLocation();
+  const { userRole, viewAsUser, setViewAsUser } = useAuth();
 
   const isActive = (path) => location.pathname === path;
 
@@ -53,6 +55,17 @@ function Navigation() {
                 Settings
               </Link>
             </li>
+            {userRole === "admin" && (
+              <li>
+                <button
+                  className="nav-button view-as-user-nav-button"
+                  onClick={() => setViewAsUser(!viewAsUser)}
+                  title={viewAsUser ? "Return to admin view" : "View as regular user"}
+                >
+                  {viewAsUser ? "👤 Admin View" : "👥 User View"}
+                </button>
+              </li>
+            )}
           </ul>
         </div>
       </nav>

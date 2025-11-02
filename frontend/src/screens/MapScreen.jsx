@@ -39,12 +39,6 @@ const OSU_CAMPUS_CENTER = [36.1230, -97.0710]
 const MAP_ZOOM_LEVEL = 14
 const MAX_SIDEBAR_STOPS = 10
 
-// Map bounds to keep map within OSU campus area (Stillwater, OK)
-const MAP_BOUNDS = [
-  [36.0950, -97.0900], // Southwest corner
-  [36.1510, -97.0520]  // Northeast corner
-]
-
 // Calculate distance between two coordinates using Haversine formula (returns distance in meters)
 function calculateDistance(lat1, lng1, lat2, lng2) {
   const R = 6371000 // Earth radius in meters
@@ -59,7 +53,7 @@ function calculateDistance(lat1, lng1, lat2, lng2) {
 }
 
 // Component to center map on location and set bounds
-function MapController({ center, zoom, bounds, userLocation }) {
+function MapController({ center, zoom, bounds, userLocation, shouldCenterOnUser }) {
   const map = useMap()
   
   useEffect(() => {
@@ -78,11 +72,13 @@ function MapController({ center, zoom, bounds, userLocation }) {
   }, [center, zoom, bounds, map])
   
   // Center map on user location when it's enabled and available
+  // Also center when shouldCenterOnUser changes (triggered by "Center on Me" button)
   useEffect(() => {
-    if (userLocation && userLocation.lat && userLocation.lng) {
+    if (userLocation && userLocation.lat !== undefined && userLocation.lat !== null && 
+        userLocation.lng !== undefined && userLocation.lng !== null) {
       map.setView([userLocation.lat, userLocation.lng], Math.max(zoom, 16))
     }
-  }, [userLocation, map, zoom])
+  }, [userLocation, map, zoom, shouldCenterOnUser])
   
   // Handle window resize to prevent map issues
   useEffect(() => {
@@ -123,6 +119,9 @@ function MapScreen() {
   // Closest bus stop state
   const [closestStop, setClosestStop] = useState(null)
   const [pathToClosestStop, setPathToClosestStop] = useState([])
+  
+  // State to trigger map centering
+  const [shouldCenterOnUser, setShouldCenterOnUser] = useState(0)
 
   useEffect(() => {
     loadMapData()
@@ -190,12 +189,18 @@ function MapScreen() {
           } catch (error) {
             console.error(`Error calculating path for route ${route.route_id}:`, error)
             // Fallback to straight line if routing fails
-            const fallbackPath = route.stops.map(stop => [stop.lat, stop.lon])
+            const fallbackPath = route.stops.map(stop => {
+              const stopLng = stop.lon !== undefined ? stop.lon : stop.lng
+              return [stop.lat, stopLng]
+            })
             newRoutePaths[route.route_id] = fallbackPath
           }
         } else {
           // If route has less than 2 stops, use straight line
-          const fallbackPath = route.stops ? route.stops.map(stop => [stop.lat, stop.lon]) : []
+          const fallbackPath = route.stops ? route.stops.map(stop => {
+            const stopLng = stop.lon !== undefined ? stop.lon : stop.lng
+            return [stop.lat, stopLng]
+          }) : []
           newRoutePaths[route.route_id] = fallbackPath
         }
       }
@@ -216,9 +221,10 @@ function MapScreen() {
     let minDistance = Infinity
     
     for (const stop of stops) {
+      const stopLng = stop.lon !== undefined ? stop.lon : stop.lng
       if (stop.lat !== undefined && stop.lat !== null && 
-          stop.lon !== undefined && stop.lon !== null) {
-        const distance = calculateDistance(userLat, userLng, stop.lat, stop.lon)
+          stopLng !== undefined && stopLng !== null) {
+        const distance = calculateDistance(userLat, userLng, stop.lat, stopLng)
         if (distance < minDistance) {
           minDistance = distance
           closest = stop
@@ -529,12 +535,20 @@ function MapScreen() {
 
   // Center map on user location
   const centerOnLocation = async () => {
-    if (userLocation) {
-      // Location already available, map controller will handle centering
-      return
+    if (userLocation && userLocation.lat !== undefined && userLocation.lat !== null && 
+        userLocation.lng !== undefined && userLocation.lng !== null) {
+      // Location already available, trigger centering by updating shouldCenterOnUser
+      setShouldCenterOnUser(prev => prev + 1)
+    } else {
+      // Get location if not available, then center
+      const location = await getCurrentLocation()
+      if (location) {
+        // Small delay to ensure state is updated, then trigger centering
+        setTimeout(() => {
+          setShouldCenterOnUser(prev => prev + 1)
+        }, 100)
+      }
     }
-    // Get location if not available
-    await getCurrentLocation()
   }
 
   // Update closest stop and path when user location or stops change
@@ -621,15 +635,6 @@ function MapScreen() {
             <h1>OSU Bus Map {userRole === "admin" && !viewAsUser && <span className="admin-badge">Admin</span>}</h1>
             <p>Track buses and view OSU routes</p>
           </div>
-          {userRole === "admin" && (
-            <button
-              className="control-button view-as-user-button"
-              onClick={() => setViewAsUser(!viewAsUser)}
-              title={viewAsUser ? "Return to admin view" : "View as regular user"}
-            >
-              {viewAsUser ? "👤 View as Admin" : "👥 View as User"}
-            </button>
-          )}
         </div>
         {saveMessage && (
           <div className={`save-message ${saveMessage.includes('success') ? 'success' : 'error'}`}>
@@ -726,6 +731,7 @@ function MapScreen() {
               zoom={MAP_ZOOM_LEVEL} 
               bounds={null}
               userLocation={userLocation}
+              shouldCenterOnUser={shouldCenterOnUser}
             />
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -785,7 +791,10 @@ function MapScreen() {
               .map((route, index) => {
                 // Get calculated road path or fallback to straight line
                 const routePath = routePaths[route.route_id] || 
-                  route.stops.map(stop => [stop.lat, stop.lon])
+                  route.stops.map(stop => {
+                    const stopLng = stop.lon !== undefined ? stop.lon : stop.lng
+                    return [stop.lat, stopLng]
+                  })
                 
                 const isSelected = selectedRoute === route.route_id
                 // Ensure each route is visible by giving unique z-index offset
@@ -824,10 +833,12 @@ function MapScreen() {
             )}
 
             {/* Render stops with default markers */}
-            {showStops && stops.map((stop) => (
+            {showStops && stops.map((stop) => {
+              const stopLng = stop.lon !== undefined ? stop.lon : stop.lng
+              return (
               <Marker
                 key={stop.stop_id}
-                position={[stop.lat, stop.lon]}
+                position={[stop.lat, stopLng]}
               >
                 <Popup>
                   <div className="stop-popup">
@@ -837,7 +848,8 @@ function MapScreen() {
                   </div>
                 </Popup>
               </Marker>
-            ))}
+              )
+            })}
           </MapContainer>
         </div>
 

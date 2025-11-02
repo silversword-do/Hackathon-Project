@@ -28,11 +28,6 @@
   font-size: 1.1rem;
 }
 
-.view-as-user-button {
-  white-space: nowrap;
-  align-self: center;
-}
-
 .map-controls-bar {
   display: flex;
   gap: 1rem;
@@ -339,9 +334,6 @@
     align-items: stretch;
   }
 
-  .view-as-user-button {
-    align-self: stretch;
-  }
 }
 
 /* Admin styles */

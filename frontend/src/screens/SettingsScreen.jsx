@@ -1,17 +1,24 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
 import './SettingsScreen.css'
 
 function SettingsScreen() {
   const { logout, isAdmin, user } = useAuth()
+  const { theme, setTheme: setThemeState } = useTheme()
   const [settings, setSettings] = useState({
     apiKey: '',
     apiUrl: '',
     autoRefresh: true,
     refreshInterval: 30,
-    theme: 'dark',
+    theme: theme,
     notifications: true
   })
+
+  // Sync settings theme with theme context
+  useEffect(() => {
+    setSettings(prev => ({ ...prev, theme }))
+  }, [theme])
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target
@@ -19,6 +26,11 @@ function SettingsScreen() {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }))
+    
+    // Update theme context when theme changes
+    if (name === 'theme') {
+      setThemeState(value)
+    }
   }
 
   const handleSave = (e) => {
@@ -28,14 +40,16 @@ function SettingsScreen() {
   }
 
   const handleReset = () => {
-    setSettings({
+    const resetSettings = {
       apiKey: '',
       apiUrl: '',
       autoRefresh: true,
       refreshInterval: 30,
       theme: 'light',
       notifications: true
-    })
+    }
+    setSettings(resetSettings)
+    setThemeState('light')
   }
 
   return (
