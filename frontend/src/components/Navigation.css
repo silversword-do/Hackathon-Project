@@ -108,12 +108,12 @@
 }
 
 :root.dark-theme .nav-links a {
-  color: var(--osu-black);
+  color: var(--osu-white);
 }
 
 :root.dark-theme .nav-links a:hover {
-  background-color: rgba(0, 0, 0, 0.1);
-  color: var(--osu-black);
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--osu-white);
 }
 
 :root.dark-theme .nav-links a.active {
@@ -122,12 +122,12 @@
 }
 
 :root.dark-theme .nav-button {
-  color: var(--osu-black);
+  color: var(--osu-white);
 }
 
 :root.dark-theme .nav-button:hover {
-  background-color: rgba(0, 0, 0, 0.1);
-  color: var(--osu-black);
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--osu-white);
 }
 
 :root.dark-theme .mobile-nav-tabs {

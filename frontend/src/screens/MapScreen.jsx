@@ -122,6 +122,10 @@ function MapScreen() {
   
   // State to trigger map centering
   const [shouldCenterOnUser, setShouldCenterOnUser] = useState(0)
+  
+  // Route stops dropdown state
+  const [showRouteStopsDropdown, setShowRouteStopsDropdown] = useState(false)
+  const routeStopsDropdownRef = useRef(null)
 
   useEffect(() => {
     loadMapData()
@@ -236,8 +240,24 @@ function MapScreen() {
   }, [stops])
 
   const handleRouteSelect = (routeId) => {
-    setSelectedRoute(selectedRoute === routeId ? null : routeId)
+    const newSelectedRoute = selectedRoute === routeId ? null : routeId
+    setSelectedRoute(newSelectedRoute)
+    setShowRouteStopsDropdown(newSelectedRoute !== null)
   }
+
+  // Close route stops dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (routeStopsDropdownRef.current && !routeStopsDropdownRef.current.contains(event.target)) {
+        setShowRouteStopsDropdown(false)
+      }
+    }
+
+    if (showRouteStopsDropdown) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showRouteStopsDropdown])
 
   const handleEditRoute = (routeId) => {
     const route = routes.find(r => r.route_id === routeId)
@@ -635,6 +655,41 @@ function MapScreen() {
             <h1>OSU Bus Map {userRole === "admin" && !viewAsUser && <span className="admin-badge">Admin</span>}</h1>
             <p>Track buses and view OSU routes</p>
           </div>
+          {/* Route stops dropdown */}
+          {selectedRoute && (() => {
+            const selectedRouteData = routes.find(r => r.route_id === selectedRoute)
+            return selectedRouteData && selectedRouteData.stops && selectedRouteData.stops.length > 0 ? (
+              <div className="route-stops-dropdown" ref={routeStopsDropdownRef}>
+                <button
+                  className="route-stops-dropdown-toggle"
+                  onClick={() => setShowRouteStopsDropdown(!showRouteStopsDropdown)}
+                >
+                  <span className="route-stops-dropdown-title">
+                    {selectedRouteData.name} Stops ({selectedRouteData.stops.length})
+                  </span>
+                  <span className="dropdown-arrow">{showRouteStopsDropdown ? '▼' : '▶'}</span>
+                </button>
+                {showRouteStopsDropdown && (
+                  <div className="route-stops-dropdown-menu">
+                    {selectedRouteData.stops.map((stop, idx) => {
+                      const stopLng = stop.lon !== undefined ? stop.lon : stop.lng
+                      return (
+                        <div key={stop.stop_id || idx} className="route-stop-item">
+                          <span className="stop-number">{idx + 1}</span>
+                          <div className="stop-details">
+                            <span className="stop-name">{stop.name || stop.stop_id}</span>
+                            {stop.address && (
+                              <span className="stop-address">{stop.address}</span>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            ) : null
+          })()}
         </div>
         {saveMessage && (
           <div className={`save-message ${saveMessage.includes('success') ? 'success' : 'error'}`}>
@@ -789,7 +844,7 @@ function MapScreen() {
             {showRoutes && routes
               .filter(route => route.stops && route.stops.length > 0)
               .map((route, index) => {
-                // Get calculated road path or fallback to straight line
+                // Get calculated road path or fallback to straight line - routes stay on roads (no offset)
                 const routePath = routePaths[route.route_id] || 
                   route.stops.map(stop => {
                     const stopLng = stop.lon !== undefined ? stop.lon : stop.lng
@@ -797,8 +852,6 @@ function MapScreen() {
                   })
                 
                 const isSelected = selectedRoute === route.route_id
-                // Ensure each route is visible by giving unique z-index offset
-                const zIndexOffset = index * 10
 
                 return (
                   <Polyline
@@ -814,9 +867,6 @@ function MapScreen() {
                     pathOptions={{
                       interactive: true,
                       bubblingMouseEvents: true
-                    }}
-                    style={{
-                      zIndex: 1000 + zIndexOffset
                     }}
                   />
                 )
