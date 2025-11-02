@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react'
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet'
+import { useState, useEffect, useRef } from 'react'
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap, Circle } from 'react-leaflet'
 import { useAuth } from '../context/AuthContext'
 import { fetchOSURoutes, fetchOSUStops, saveOSURoutes } from '../services/api'
 import RouteEditor from '../components/RouteEditor'
 import './MapScreen.css'
 import 'leaflet/dist/leaflet.css'
+import { Geolocation } from '@capacitor/geolocation'
+import { Capacitor } from '@capacitor/core'
 
 // Fix for default marker icons in React-Leaflet
 import L from 'leaflet'
@@ -22,6 +24,14 @@ const DefaultIcon = L.icon({
 
 L.Marker.prototype.options.icon = DefaultIcon
 
+// Custom icon for user location (blue circle)
+const UserLocationIcon = L.divIcon({
+  className: 'user-location-marker',
+  html: '<div class="user-location-pulse"></div><div class="user-location-dot"></div>',
+  iconSize: [20, 20],
+  iconAnchor: [10, 10]
+})
+
 
 // OSU Campus center coordinates (Stillwater, OK)
 const OSU_CAMPUS_CENTER = [36.1230, -97.0710]
@@ -34,8 +44,8 @@ const MAP_BOUNDS = [
   [36.1510, -97.0520]  // Northeast corner
 ]
 
-// Component to center map on OSU campus and set bounds
-function MapController({ center, zoom, bounds }) {
+// Component to center map on location and set bounds
+function MapController({ center, zoom, bounds, userLocation }) {
   const map = useMap()
   
   useEffect(() => {
@@ -47,6 +57,13 @@ function MapController({ center, zoom, bounds }) {
       map.options.maxBoundsViscosity = 1.0 // Prevents dragging outside bounds
     }
   }, [center, zoom, bounds, map])
+  
+  // Center map on user location when it's enabled and available
+  useEffect(() => {
+    if (userLocation && userLocation.lat && userLocation.lng) {
+      map.setView([userLocation.lat, userLocation.lng], Math.max(zoom, 16))
+    }
+  }, [userLocation, map, zoom])
   
   // Handle window resize to prevent map issues
   useEffect(() => {
@@ -72,10 +89,37 @@ function MapScreen() {
   const [editingRoute, setEditingRoute] = useState(null)
   const [showRouteEditor, setShowRouteEditor] = useState(false)
   const [saveMessage, setSaveMessage] = useState(null)
+  
+  // Location tracking state
+  const [userLocation, setUserLocation] = useState(null)
+  const [isTrackingLocation, setIsTrackingLocation] = useState(false)
+  const [locationError, setLocationError] = useState(null)
+  const locationWatchId = useRef(null)
 
   useEffect(() => {
     loadMapData()
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Clean up location watching on unmount
+  useEffect(() => {
+    return () => {
+      if (locationWatchId.current) {
+        if (Capacitor.isNativePlatform()) {
+          try {
+            Geolocation.clearWatch({ id: locationWatchId.current })
+          } catch (error) {
+            clearInterval(locationWatchId.current)
+          }
+        } else {
+          if (typeof locationWatchId.current === 'number' && navigator.geolocation?.clearWatch) {
+            navigator.geolocation.clearWatch(locationWatchId.current)
+          } else {
+            clearInterval(locationWatchId.current)
+          }
+        }
+      }
+    }
   }, [])
 
   const loadMapData = async () => {
@@ -185,6 +229,210 @@ function MapScreen() {
     }
   }
 
+  // Request location permissions
+  const requestLocationPermissions = async () => {
+    try {
+      if (Capacitor.isNativePlatform()) {
+        // On native platforms, request permissions
+        const permission = await Geolocation.requestPermissions()
+        if (permission.location !== 'granted') {
+          setLocationError('Location permission denied. Please enable location permissions in settings.')
+          return false
+        }
+      }
+      return true
+    } catch (error) {
+      console.error('Error requesting location permissions:', error)
+      setLocationError('Failed to request location permissions')
+      return false
+    }
+  }
+
+  // Get current location
+  const getCurrentLocation = async () => {
+    try {
+      setLocationError(null)
+      const hasPermission = await requestLocationPermissions()
+      if (!hasPermission) return null
+
+      let position
+      if (Capacitor.isNativePlatform()) {
+        // Use Capacitor Geolocation on native platforms
+        position = await Geolocation.getCurrentPosition({
+          enableHighAccuracy: true,
+          timeout: 10000
+        })
+      } else {
+        // Use browser geolocation on web
+        position = await new Promise((resolve, reject) => {
+          if (!navigator.geolocation) {
+            reject(new Error('Geolocation is not supported'))
+            return
+          }
+          navigator.geolocation.getCurrentPosition(
+            resolve,
+            reject,
+            {
+              enableHighAccuracy: true,
+              timeout: 10000,
+              maximumAge: 0
+            }
+          )
+        })
+      }
+
+      const location = {
+        lat: position.coords.latitude,
+        lng: position.coords.longitude,
+        accuracy: position.coords.accuracy
+      }
+
+      setUserLocation(location)
+      return location
+    } catch (error) {
+      console.error('Error getting location:', error)
+      setLocationError('Unable to get your location. Please check your GPS settings.')
+      setUserLocation(null)
+      return null
+    }
+  }
+
+  // Watch location updates
+  const watchLocation = async () => {
+    try {
+      setLocationError(null)
+      const hasPermission = await requestLocationPermissions()
+      if (!hasPermission) {
+        setIsTrackingLocation(false)
+        return
+      }
+
+      if (Capacitor.isNativePlatform()) {
+        // Use native watchPosition for continuous updates
+        try {
+          locationWatchId.current = await Geolocation.watchPosition(
+            {
+              enableHighAccuracy: true,
+              timeout: 5000
+            },
+            (position, err) => {
+              if (err) {
+                console.error('Location watch error:', err)
+                setLocationError('Error tracking location')
+                setIsTrackingLocation(false)
+                return
+              }
+              if (position && position.coords) {
+                setUserLocation({
+                  lat: position.coords.latitude,
+                  lng: position.coords.longitude,
+                  accuracy: position.coords.accuracy
+                })
+              }
+            }
+          )
+        } catch (watchError) {
+          // Fallback to polling if watchPosition fails
+          console.warn('watchPosition not available, using polling:', watchError)
+          const intervalId = setInterval(async () => {
+            await getCurrentLocation()
+          }, 5000)
+          locationWatchId.current = intervalId
+        }
+      } else {
+        // For web, use browser geolocation watchPosition or poll
+        if (navigator.geolocation && navigator.geolocation.watchPosition) {
+          try {
+            locationWatchId.current = navigator.geolocation.watchPosition(
+              (position) => {
+                setUserLocation({
+                  lat: position.coords.latitude,
+                  lng: position.coords.longitude,
+                  accuracy: position.coords.accuracy
+                })
+              },
+              (err) => {
+                console.error('Location watch error:', err)
+                setLocationError('Error tracking location')
+                setIsTrackingLocation(false)
+              },
+              {
+                enableHighAccuracy: true,
+                timeout: 5000
+              }
+            )
+          } catch (webError) {
+            // Fallback to polling
+            console.warn('watchPosition not available, using polling:', webError)
+            const intervalId = setInterval(async () => {
+              await getCurrentLocation()
+            }, 5000)
+            locationWatchId.current = intervalId
+          }
+        } else {
+          // Poll location periodically as fallback
+          const intervalId = setInterval(async () => {
+            await getCurrentLocation()
+          }, 5000) // Update every 5 seconds on web
+
+          locationWatchId.current = intervalId
+        }
+      }
+    } catch (error) {
+      console.error('Error watching location:', error)
+      setLocationError('Failed to track location')
+      setIsTrackingLocation(false)
+    }
+  }
+
+  // Stop watching location
+  const stopWatchingLocation = () => {
+    if (locationWatchId.current) {
+      if (Capacitor.isNativePlatform()) {
+        try {
+          Geolocation.clearWatch({ id: locationWatchId.current })
+        } catch (error) {
+          // If it's not a watch ID, it might be an interval
+          clearInterval(locationWatchId.current)
+        }
+      } else {
+        // Check if it's a geolocation watch ID or interval
+        if (typeof locationWatchId.current === 'number' && navigator.geolocation?.clearWatch) {
+          navigator.geolocation.clearWatch(locationWatchId.current)
+        } else {
+          clearInterval(locationWatchId.current)
+        }
+      }
+      locationWatchId.current = null
+    }
+    setIsTrackingLocation(false)
+    // Keep the last known location visible, just stop updating
+  }
+
+  // Toggle location tracking
+  const toggleLocationTracking = async () => {
+    if (isTrackingLocation) {
+      stopWatchingLocation()
+    } else {
+      // First get current location
+      const location = await getCurrentLocation()
+      if (location) {
+        setIsTrackingLocation(true)
+        await watchLocation()
+      }
+    }
+  }
+
+  // Center map on user location
+  const centerOnLocation = async () => {
+    if (userLocation) {
+      // Location already available, map controller will handle centering
+      return
+    }
+    // Get location if not available
+    await getCurrentLocation()
+  }
+
 
   if (loading) {
     return (
@@ -247,6 +495,22 @@ function MapScreen() {
           {showStops ? 'Hide' : 'Show'} Stops
         </button>
         <button
+          className={`control-button location-button ${isTrackingLocation ? 'active' : ''}`}
+          onClick={toggleLocationTracking}
+          title={isTrackingLocation ? 'Stop tracking location' : 'Track my location'}
+        >
+          📍 {isTrackingLocation ? 'Stop Tracking' : 'My Location'}
+        </button>
+        {userLocation && !isTrackingLocation && (
+          <button
+            className="control-button location-button"
+            onClick={centerOnLocation}
+            title="Center map on my location"
+          >
+            🎯 Center on Me
+          </button>
+        )}
+        <button
           className="control-button"
           onClick={loadMapData}
         >
@@ -269,22 +533,68 @@ function MapScreen() {
           </>
         )}
       </div>
+      
+      {locationError && (
+        <div className="location-error">
+          <p>{locationError}</p>
+          <button onClick={() => setLocationError(null)}>×</button>
+        </div>
+      )}
 
       <div className="map-layout">
         <div className="map-container">
           <MapContainer
-            center={OSU_CAMPUS_CENTER}
+            center={userLocation ? [userLocation.lat, userLocation.lng] : OSU_CAMPUS_CENTER}
             zoom={MAP_ZOOM_LEVEL}
             style={{ height: '100%', width: '100%' }}
             scrollWheelZoom={true}
             maxBounds={MAP_BOUNDS}
             maxBoundsViscosity={1.0}
           >
-            <MapController center={OSU_CAMPUS_CENTER} zoom={MAP_ZOOM_LEVEL} bounds={MAP_BOUNDS} />
+            <MapController 
+              center={userLocation ? [userLocation.lat, userLocation.lng] : OSU_CAMPUS_CENTER} 
+              zoom={MAP_ZOOM_LEVEL} 
+              bounds={MAP_BOUNDS}
+              userLocation={userLocation}
+            />
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
+
+            {/* User location marker */}
+            {userLocation && (
+              <Marker
+                position={[userLocation.lat, userLocation.lng]}
+                icon={UserLocationIcon}
+              >
+                <Popup>
+                  <div className="user-location-popup">
+                    <h3>📍 Your Location</h3>
+                    <p>Latitude: {userLocation.lat.toFixed(6)}</p>
+                    <p>Longitude: {userLocation.lng.toFixed(6)}</p>
+                    {userLocation.accuracy && (
+                      <p>Accuracy: {userLocation.accuracy.toFixed(0)} meters</p>
+                    )}
+                  </div>
+                </Popup>
+              </Marker>
+            )}
+            
+            {/* Accuracy circle for user location */}
+            {userLocation && userLocation.accuracy && userLocation.accuracy < 100 && (
+              <Circle
+                center={[userLocation.lat, userLocation.lng]}
+                radius={Math.min(userLocation.accuracy, 50)} // Cap at 50 meters for visibility
+                pathOptions={{
+                  color: '#4285F4',
+                  fillColor: '#4285F4',
+                  fillOpacity: 0.1,
+                  weight: 2,
+                  opacity: 0.5
+                }}
+              />
+            )}
 
             {/* Render routes connecting markers only (no intermediate waypoints through buildings) */}
             {showRoutes && routes
