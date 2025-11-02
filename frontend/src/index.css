@@ -35,11 +35,38 @@ body {
   background-color: var(--background);
   color: var(--text-primary);
   line-height: 1.6;
+  /* Prevent text selection on mobile for better app-like experience */
+  -webkit-tap-highlight-color: transparent;
+  /* Prevent pull-to-refresh on mobile */
+  overscroll-behavior-y: none;
 }
 
 #root {
   min-height: 100vh;
+  min-height: -webkit-fill-available; /* iOS Safari fix */
   display: flex;
   flex-direction: column;
+  /* Account for safe areas on mobile devices */
+  padding-top: env(safe-area-inset-top);
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  #root {
+    height: 100vh;
+    height: -webkit-fill-available;
+  }
+  
+  /* Allow scrolling within main content */
+  .app {
+    height: 100%;
+    overflow: hidden;
+  }
+  
+  .main-content {
+    height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  }
 }
 

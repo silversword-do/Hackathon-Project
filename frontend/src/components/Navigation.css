@@ -1,9 +1,23 @@
 .navigation {
   background-color: var(--osu-black);
   box-shadow: var(--shadow);
+  z-index: 100;
+}
+
+/* Top navigation for desktop/tablet */
+.navigation-top {
   position: sticky;
   top: 0;
-  z-index: 100;
+}
+
+/* Bottom navigation for mobile */
+.navigation-bottom {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding-bottom: env(safe-area-inset-bottom);
+  display: none; /* Hidden by default, shown on mobile */
 }
 
 .nav-container {
@@ -69,20 +83,96 @@
   color: var(--osu-white);
 }
 
+/* Mobile bottom tab bar */
+.mobile-nav-tabs {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  width: 100%;
+  background-color: var(--osu-black);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.5rem 0;
+  min-height: 60px;
+}
+
+.mobile-nav-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  color: rgba(255, 255, 255, 0.6);
+  transition: all 0.2s;
+  flex: 1;
+  padding: 0.5rem;
+  min-width: 0;
+}
+
+.mobile-nav-tab .nav-icon {
+  font-size: 1.5rem;
+  margin-bottom: 0.25rem;
+  display: block;
+}
+
+.mobile-nav-tab .nav-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mobile-nav-tab.active {
+  color: var(--osu-orange);
+}
+
+.mobile-nav-tab:active {
+  opacity: 0.7;
+}
+
+/* Mobile styles */
 @media (max-width: 768px) {
+  /* Hide top navigation on mobile */
+  .navigation-top {
+    display: none;
+  }
+
+  /* Show bottom navigation on mobile */
+  .navigation-bottom {
+    display: block;
+  }
+
+  /* Add padding to main content to account for bottom nav */
+  .app .main-content {
+    padding-bottom: 80px;
+  }
+}
+
+/* Desktop/Tablet styles */
+@media (min-width: 769px) {
+  /* Show top navigation */
+  .navigation-top {
+    display: block;
+  }
+
+  /* Hide bottom navigation */
+  .navigation-bottom {
+    display: none;
+  }
+
   .nav-container {
-    padding: 1rem;
-    flex-direction: column;
-    gap: 1rem;
+    padding: 1rem 2rem;
+    flex-direction: row;
+    gap: 0;
   }
 
   .nav-links {
-    gap: 1rem;
+    gap: 2rem;
   }
 
   .nav-links a {
-    padding: 0.5rem;
-    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
   }
 }
 
