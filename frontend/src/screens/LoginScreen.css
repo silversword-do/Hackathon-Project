@@ -132,6 +132,34 @@
   color: var(--primary-color);
 }
 
+.login-footer {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
+  text-align: center;
+}
+
+.toggle-mode-button {
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  cursor: pointer;
+  font-size: 0.9rem;
+  text-decoration: underline;
+  padding: 0.5rem;
+  transition: color 0.2s;
+}
+
+.toggle-mode-button:hover {
+  color: var(--primary-hover);
+}
+
+.login-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
 @media (max-width: 768px) {
   .login-container {
     padding: 2rem;

@@ -9,7 +9,15 @@ import ClassScheduleScreen from './screens/ClassScheduleScreen'
 import './App.css'
 
 function AppRoutes() {
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, loading } = useAuth()
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <p>Loading...</p>
+      </div>
+    )
+  }
 
   if (!isAuthenticated) {
     return (

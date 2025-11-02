@@ -2,12 +2,18 @@
  * API service for fetching transit data
  */
 
-import { loadRoutes, saveRoutes, loadStops, saveStops } from './routeStorage'
+import { loadStops, saveStops } from './routeStorage'
+import { 
+  fetchRoutesFromFirebase, 
+  saveRoutesToFirebase, 
+  saveRouteToFirebase,
+  deleteRouteFromFirebase
+} from './firebaseRoutes'
 
 // Backend API URL - update when backend API is implemented
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
-// Default routes if none are saved
+// Default routes if none are saved in Firebase
 const DEFAULT_ROUTES = [
   {
     route_id: 'OSU_ORANGE',
@@ -46,35 +52,73 @@ const DEFAULT_ROUTES = [
 ]
 
 /**
- * Fetch OSU bus routes
+ * Fetch OSU bus routes from Firebase
  * @returns {Promise<{routes: Array}>}
  */
 export async function fetchOSURoutes() {
   try {
-    // Try to load saved routes first
-    const savedRoutes = loadRoutes()
-    if (savedRoutes && savedRoutes.length > 0) {
-      return { routes: savedRoutes }
+    // Try to fetch routes from Firebase
+    const firebaseRoutes = await fetchRoutesFromFirebase()
+    
+    if (firebaseRoutes && firebaseRoutes.length > 0) {
+      // Remove the 'id' field that Firestore adds and use route_id instead
+      const routes = firebaseRoutes.map(route => {
+        const { id, ...routeData } = route
+        return routeData
+      })
+      return { routes }
     }
     
-    // Fallback to default routes
+    // Fallback to default routes if Firebase is empty
     return { routes: DEFAULT_ROUTES }
   } catch (error) {
-    console.error('Error fetching routes:', error)
+    console.error('Error fetching routes from Firebase:', error)
+    // Fallback to default routes on error
     return { routes: DEFAULT_ROUTES }
   }
 }
 
 /**
- * Save OSU bus routes (admin only)
+ * Save OSU bus routes to Firebase (admin only)
  * @param {Array} routes - Routes to save
  * @returns {Promise<boolean>}
  */
 export async function saveOSURoutes(routes) {
   try {
-    return saveRoutes(routes)
+    await saveRoutesToFirebase(routes)
+    return true
   } catch (error) {
-    console.error('Error saving routes:', error)
+    console.error('Error saving routes to Firebase:', error)
+    return false
+  }
+}
+
+/**
+ * Save a single route to Firebase (admin only)
+ * @param {Object} route - Route to save
+ * @returns {Promise<boolean>}
+ */
+export async function saveRoute(route) {
+  try {
+    await saveRouteToFirebase(route)
+    return true
+  } catch (error) {
+    console.error('Error saving route to Firebase:', error)
+    return false
+  }
+}
+
+/**
+ * Delete a route from Firebase (admin only)
+ * @param {string} routeId - Route ID to delete
+ * @returns {Promise<boolean>}
+ */
+export async function deleteRoute(routeId) {
+  try {
+    await deleteRouteFromFirebase(routeId)
+    return true
+  } catch (error) {
+    console.error('Error deleting route from Firebase:', error)
     return false
   }
 }
