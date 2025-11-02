@@ -5,7 +5,7 @@ import {
   signOut,
   onAuthStateChanged
 } from "firebase/auth";
-import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc, Timestamp } from "firebase/firestore";
 import { auth, db } from "../services/firebase";
 
 const AuthContext = createContext();
@@ -60,28 +60,50 @@ export function AuthProvider({ children }) {
             const userData = userDoc.data();
             let role = userData.role || "user";
             
+            console.log(`User ${firebaseUser.email} current role: ${role}`);
+            
             // Auto-promote to admin if email matches admin pattern and not already admin
             if (!role || role === "user") {
               if (isAdminEmail(firebaseUser.email)) {
+                console.log(`Auto-promoting ${firebaseUser.email} to admin`);
                 role = "admin";
-                // Update the role in Firestore
-                await updateDoc(userDocRef, { role: "admin" });
+                try {
+                  // Update the role in Firestore
+                  await updateDoc(userDocRef, { role: "admin" });
+                  console.log(`Successfully updated role to admin for ${firebaseUser.email}`);
+                } catch (updateError) {
+                  console.error("Error updating role to admin:", updateError);
+                  console.error("Error code:", updateError.code);
+                  console.error("Error message:", updateError.message);
+                }
               }
             }
             
+            console.log(`Final role for ${firebaseUser.email}: ${role}, isAdmin: ${role === "admin"}`);
             setUserRole(role);
           } else {
             // Create user document if it doesn't exist
             const defaultRole = isAdminEmail(firebaseUser.email) ? "admin" : "user";
-            await setDoc(userDocRef, {
-              email: firebaseUser.email,
-              role: defaultRole,
-              createdAt: new Date(),
-            });
-            setUserRole(defaultRole);
+            try {
+              await setDoc(userDocRef, {
+                email: firebaseUser.email,
+                role: defaultRole,
+                createdAt: Timestamp.now(),
+              });
+              console.log(`Created user document for ${firebaseUser.email} with role: ${defaultRole}`);
+              setUserRole(defaultRole);
+            } catch (createError) {
+              console.error("Error creating user document:", createError);
+              console.error("Error code:", createError.code);
+              console.error("Error message:", createError.message);
+              // Still set the role locally even if Firestore write fails
+              setUserRole(defaultRole);
+            }
           }
         } catch (error) {
           console.error("Error fetching user data:", error);
+          console.error("Error code:", error.code);
+          console.error("Error message:", error.message);
           setUserRole("user");
         }
       } else {
@@ -118,11 +140,21 @@ export function AuthProvider({ children }) {
       const finalRole = role || (isAdminEmail(email) ? "admin" : "user");
       
       // Create user document in Firestore
-      await setDoc(doc(db, "users", userCredential.user.uid), {
-        email: email,
-        role: finalRole,
-        createdAt: new Date(),
-      });
+      const userDocRef = doc(db, "users", userCredential.user.uid);
+      try {
+        await setDoc(userDocRef, {
+          email: email,
+          role: finalRole,
+          createdAt: Timestamp.now(),
+        });
+        console.log(`Created user document for ${email} with role: ${finalRole}`);
+      } catch (docError) {
+        console.error("Error creating user document during signup:", docError);
+        console.error("Error code:", docError.code);
+        console.error("Error message:", docError.message);
+        // Re-throw to let the caller handle it
+        throw docError;
+      }
       
       // Auth state will be updated by onAuthStateChanged listener
       return { success: true, user: userCredential.user };
