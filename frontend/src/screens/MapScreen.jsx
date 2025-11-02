@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap, Circle } from 'react-leaflet'
 import { useAuth } from '../context/AuthContext'
 import { fetchOSURoutes, fetchOSUStops, saveOSURoutes } from '../services/api'
+import { getRoutePathForStops } from '../services/routingService'
 import RouteEditor from '../components/RouteEditor'
 import './MapScreen.css'
 import 'leaflet/dist/leaflet.css'
@@ -95,6 +96,11 @@ function MapScreen() {
   const [isTrackingLocation, setIsTrackingLocation] = useState(false)
   const [locationError, setLocationError] = useState(null)
   const locationWatchId = useRef(null)
+  
+  // Route paths state (stores calculated road-following paths)
+  // Using object instead of Map for React state compatibility
+  const [routePaths, setRoutePaths] = useState({})
+  const [calculatingRoutes, setCalculatingRoutes] = useState(false)
 
   useEffect(() => {
     loadMapData()
@@ -131,13 +137,52 @@ function MapScreen() {
         fetchOSUStops()
       ])
       
-      setRoutes(routesData.routes || [])
+      const loadedRoutes = routesData.routes || []
+      setRoutes(loadedRoutes)
       setStops(stopsData.stops || [])
+      
+      // Calculate road paths for all routes
+      await calculateRoutePaths(loadedRoutes)
     } catch (err) {
       console.error('Error loading map data:', err)
       setError('Failed to load map data. Please try again later.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  // Calculate road-following paths for routes
+  const calculateRoutePaths = async (routesToCalculate = routes) => {
+    if (!routesToCalculate || routesToCalculate.length === 0) return
+
+    setCalculatingRoutes(true)
+    const newRoutePaths = { ...routePaths } // Start with existing paths
+
+    try {
+      // Calculate paths for each route
+      for (const route of routesToCalculate) {
+        if (route.stops && route.stops.length >= 2) {
+          try {
+            const path = await getRoutePathForStops(route.stops)
+            newRoutePaths[route.route_id] = path
+          } catch (error) {
+            console.error(`Error calculating path for route ${route.route_id}:`, error)
+            // Fallback to straight line if routing fails
+            const fallbackPath = route.stops.map(stop => [stop.lat, stop.lon])
+            newRoutePaths[route.route_id] = fallbackPath
+          }
+        } else {
+          // If route has less than 2 stops, use straight line
+          const fallbackPath = route.stops ? route.stops.map(stop => [stop.lat, stop.lon]) : []
+          newRoutePaths[route.route_id] = fallbackPath
+        }
+      }
+
+      setRoutePaths(newRoutePaths)
+    } catch (error) {
+      console.error('Error calculating route paths:', error)
+    } finally {
+      setCalculatingRoutes(false)
     }
   }
 
@@ -170,6 +215,13 @@ function MapScreen() {
       }
 
       setRoutes(updatedRoutes)
+      
+      // Recalculate route paths for the updated/saved route
+      const routeToRecalculate = updatedRoutes.find(r => r.route_id === routeData.route_id)
+      if (routeToRecalculate) {
+        await calculateRoutePaths([routeToRecalculate])
+      }
+      
       const success = await saveOSURoutes(updatedRoutes)
       
       if (success) {
@@ -193,6 +245,12 @@ function MapScreen() {
       try {
         const updatedRoutes = routes.filter(r => r.route_id !== routeId)
         setRoutes(updatedRoutes)
+        
+        // Remove route path from state
+        const newRoutePaths = { ...routePaths }
+        delete newRoutePaths[routeId]
+        setRoutePaths(newRoutePaths)
+        
         const success = await saveOSURoutes(updatedRoutes)
         
         if (success) {
@@ -513,8 +571,17 @@ function MapScreen() {
         <button
           className="control-button"
           onClick={loadMapData}
+          disabled={loading}
         >
           Refresh Data
+        </button>
+        <button
+          className="control-button"
+          onClick={() => calculateRoutePaths()}
+          disabled={calculatingRoutes}
+          title="Recalculate route paths following roads"
+        >
+          {calculatingRoutes ? 'Calculating...' : 'Recalc Routes'}
         </button>
         {isAdmin && (
           <>
@@ -596,13 +663,13 @@ function MapScreen() {
               />
             )}
 
-            {/* Render routes connecting markers only (no intermediate waypoints through buildings) */}
+            {/* Render routes following actual roads */}
             {showRoutes && routes
               .filter(route => route.stops && route.stops.length > 0)
               .map((route) => {
-                // Create route path connecting only markers (stops) - no intermediate waypoints
-                // Routes only follow streets connecting markers, not through buildings
-                const routePath = route.stops.map(stop => [stop.lat, stop.lon])
+                // Get calculated road path or fallback to straight line
+                const routePath = routePaths[route.route_id] || 
+                  route.stops.map(stop => [stop.lat, stop.lon])
                 
                 const isSelected = selectedRoute === route.route_id
 
@@ -619,6 +686,16 @@ function MapScreen() {
                   />
                 )
               })}
+            
+            {/* Show loading indicator while calculating routes */}
+            {calculatingRoutes && (
+              <div className="route-calculating-overlay">
+                <div className="route-calculating-message">
+                  <div className="spinner"></div>
+                  <p>Calculating road paths...</p>
+                </div>
+              </div>
+            )}
 
             {/* Render stops with default markers */}
             {showStops && stops.map((stop) => (

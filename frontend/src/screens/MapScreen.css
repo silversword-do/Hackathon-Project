@@ -511,6 +511,49 @@
   transform: scale(1.2);
 }
 
+/* Route calculating overlay */
+.route-calculating-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  border-radius: 1rem;
+}
+
+.route-calculating-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 2rem;
+  background: var(--surface);
+  border-radius: 1rem;
+  box-shadow: var(--shadow-lg);
+}
+
+.route-calculating-message p {
+  margin: 0;
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.route-calculating-message .spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--border-color);
+  border-top: 4px solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
 @media (max-width: 768px) {
   .map-header h1 {
     font-size: 2rem;
@@ -530,5 +573,13 @@
 
   .sidebar-section {
     padding: 1rem;
+  }
+  
+  .route-calculating-message {
+    padding: 1.5rem;
+  }
+  
+  .route-calculating-message p {
+    font-size: 1rem;
   }
 }
