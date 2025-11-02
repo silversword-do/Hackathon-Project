@@ -24,17 +24,27 @@ const ROUTES_COLLECTION = "routes";
 export async function fetchRoutesFromFirebase() {
   try {
     const routesRef = collection(db, ROUTES_COLLECTION);
-    const q = query(routesRef, orderBy("createdAt", "desc"));
-    const querySnapshot = await getDocs(q);
+    // Try to order by createdAt, but if it doesn't exist, just get all routes
+    let querySnapshot;
+    try {
+      const q = query(routesRef, orderBy("createdAt", "desc"));
+      querySnapshot = await getDocs(q);
+    } catch (orderError) {
+      // If ordering fails (e.g., no createdAt field or index missing), get all without ordering
+      console.warn("Could not order by createdAt, fetching all routes:", orderError);
+      querySnapshot = await getDocs(routesRef);
+    }
     
     const routes = [];
     querySnapshot.forEach((doc) => {
+      const routeData = doc.data();
       routes.push({
         id: doc.id,
-        ...doc.data(),
+        route_id: routeData.route_id || doc.id,
+        ...routeData,
         // Convert Firestore Timestamps to regular objects if needed
-        createdAt: doc.data().createdAt?.toDate ? doc.data().createdAt.toDate() : doc.data().createdAt,
-        updatedAt: doc.data().updatedAt?.toDate ? doc.data().updatedAt.toDate() : doc.data().updatedAt,
+        createdAt: routeData.createdAt?.toDate ? routeData.createdAt.toDate() : routeData.createdAt,
+        updatedAt: routeData.updatedAt?.toDate ? routeData.updatedAt.toDate() : routeData.updatedAt,
       });
     });
     

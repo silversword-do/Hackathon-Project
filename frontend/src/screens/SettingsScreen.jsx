@@ -3,13 +3,13 @@ import { useAuth } from '../context/AuthContext'
 import './SettingsScreen.css'
 
 function SettingsScreen() {
-  const { logout } = useAuth()
+  const { logout, isAdmin } = useAuth()
   const [settings, setSettings] = useState({
     apiKey: '',
     apiUrl: '',
     autoRefresh: true,
     refreshInterval: 30,
-    theme: 'light',
+    theme: 'dark',
     notifications: true
   })
 
@@ -46,35 +46,38 @@ function SettingsScreen() {
       </div>
 
       <form onSubmit={handleSave} className="settings-form">
-        <div className="settings-section">
-          <h2>API Configuration</h2>
-          
-          <div className="form-group">
-            <label htmlFor="apiKey">API Key</label>
-            <input
-              type="password"
-              id="apiKey"
-              name="apiKey"
-              value={settings.apiKey}
-              onChange={handleInputChange}
-              placeholder="Enter your API key"
-              className="form-input"
-            />
-          </div>
+        {isAdmin && (
+          <div className="settings-section">
+            <h2>API Configuration</h2>
+            <p className="settings-note">Admin-only settings</p>
+            
+            <div className="form-group">
+              <label htmlFor="apiKey">API Key</label>
+              <input
+                type="password"
+                id="apiKey"
+                name="apiKey"
+                value={settings.apiKey}
+                onChange={handleInputChange}
+                placeholder="Enter your API key"
+                className="form-input"
+              />
+            </div>
 
-          <div className="form-group">
-            <label htmlFor="apiUrl">API URL</label>
-            <input
-              type="url"
-              id="apiUrl"
-              name="apiUrl"
-              value={settings.apiUrl}
-              onChange={handleInputChange}
-              placeholder="https://api.example.com/transit"
-              className="form-input"
-            />
+            <div className="form-group">
+              <label htmlFor="apiUrl">API URL</label>
+              <input
+                type="url"
+                id="apiUrl"
+                name="apiUrl"
+                value={settings.apiUrl}
+                onChange={handleInputChange}
+                placeholder="https://api.example.com/transit"
+                className="form-input"
+              />
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="settings-section">
           <h2>Preferences</h2>

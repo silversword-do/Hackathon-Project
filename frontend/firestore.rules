@@ -14,13 +14,16 @@ service cloud.firestore {
       allow delete: if false;
     }
     
-    // Routes collection - everyone can read, only admins can write
+    // Routes collection - everyone can read, only admins can write/delete
     match /routes/{routeId} {
       // Allow authenticated users to read routes
       allow read: if request.auth != null;
       
-      // Only allow admins to write routes
-      allow write: if request.auth != null && 
+      // Only allow admins to create/update/delete routes
+      allow create, update: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      
+      allow delete: if request.auth != null && 
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
   }

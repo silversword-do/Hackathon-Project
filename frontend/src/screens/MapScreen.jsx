@@ -53,9 +53,14 @@ function MapController({ center, zoom, bounds, userLocation }) {
     if (center) {
       map.setView(center, zoom)
     }
+    // Remove restrictive bounds to allow free movement
     if (bounds) {
+      // Set optional bounds but allow dragging outside
       map.setMaxBounds(bounds)
-      map.options.maxBoundsViscosity = 1.0 // Prevents dragging outside bounds
+      map.options.maxBoundsViscosity = 0.5 // Allows some movement outside bounds but gently pushes back
+    } else {
+      // Clear bounds to allow completely free movement
+      map.setMaxBounds(null)
     }
   }, [center, zoom, bounds, map])
   
@@ -79,7 +84,7 @@ function MapController({ center, zoom, bounds, userLocation }) {
 }
 
 function MapScreen() {
-  const { isAdmin } = useAuth()
+  const { isAdmin, userRole, viewAsUser, setViewAsUser } = useAuth()
   const [routes, setRoutes] = useState([])
   const [stops, setStops] = useState([])
   const [selectedRoute, setSelectedRoute] = useState(null)
@@ -533,8 +538,21 @@ function MapScreen() {
   return (
     <div className="map-screen">
       <div className="map-header">
-        <h1>OSU Bus Map {isAdmin && <span className="admin-badge">Admin</span>}</h1>
-        <p>Track buses and view OSU routes</p>
+        <div className="map-header-top">
+          <div>
+            <h1>OSU Bus Map {userRole === "admin" && !viewAsUser && <span className="admin-badge">Admin</span>}</h1>
+            <p>Track buses and view OSU routes</p>
+          </div>
+          {userRole === "admin" && (
+            <button
+              className="control-button view-as-user-button"
+              onClick={() => setViewAsUser(!viewAsUser)}
+              title={viewAsUser ? "Return to admin view" : "View as regular user"}
+            >
+              {viewAsUser ? "👤 View as Admin" : "👥 View as User"}
+            </button>
+          )}
+        </div>
         {saveMessage && (
           <div className={`save-message ${saveMessage.includes('success') ? 'success' : 'error'}`}>
             {saveMessage}
@@ -618,13 +636,17 @@ function MapScreen() {
             zoom={MAP_ZOOM_LEVEL}
             style={{ height: '100%', width: '100%' }}
             scrollWheelZoom={true}
-            maxBounds={MAP_BOUNDS}
-            maxBoundsViscosity={1.0}
+            dragging={true}
+            touchZoom={true}
+            doubleClickZoom={true}
+            zoomControl={true}
+            minZoom={10}
+            maxZoom={18}
           >
             <MapController 
               center={userLocation ? [userLocation.lat, userLocation.lng] : OSU_CAMPUS_CENTER} 
               zoom={MAP_ZOOM_LEVEL} 
-              bounds={MAP_BOUNDS}
+              bounds={null}
               userLocation={userLocation}
             />
             <TileLayer
@@ -666,25 +688,35 @@ function MapScreen() {
               />
             )}
 
-            {/* Render routes following actual roads */}
+            {/* Render routes following actual roads - ALL routes are displayed */}
             {showRoutes && routes
               .filter(route => route.stops && route.stops.length > 0)
-              .map((route) => {
+              .map((route, index) => {
                 // Get calculated road path or fallback to straight line
                 const routePath = routePaths[route.route_id] || 
                   route.stops.map(stop => [stop.lat, stop.lon])
                 
                 const isSelected = selectedRoute === route.route_id
+                // Ensure each route is visible by giving unique z-index offset
+                const zIndexOffset = index * 10
 
                 return (
                   <Polyline
-                    key={route.route_id}
+                    key={`route-${route.route_id}-${index}`}
                     positions={routePath}
                     color={route.color || '#FF6600'}
-                    weight={isSelected ? 5 : 3}
-                    opacity={isSelected ? 0.8 : 0.6}
+                    weight={isSelected ? 6 : 4}
+                    opacity={isSelected ? 0.9 : 0.7}
+                    pane="overlayPane"
                     eventHandlers={{
                       click: () => handleRouteSelect(route.route_id)
+                    }}
+                    pathOptions={{
+                      interactive: true,
+                      bubblingMouseEvents: true
+                    }}
+                    style={{
+                      zIndex: 1000 + zIndexOffset
                     }}
                   />
                 )
@@ -753,16 +785,28 @@ function MapScreen() {
                       {route.stops?.length || 0} stops
                     </span>
                     {isAdmin && (
-                      <button
-                        className="edit-route-button"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleEditRoute(route.route_id)
-                        }}
-                        title="Edit Route"
-                      >
-                        ✏️
-                      </button>
+                      <>
+                        <button
+                          className="edit-route-button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleEditRoute(route.route_id)
+                          }}
+                          title="Edit Route"
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          className="delete-route-button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleDeleteRoute(route.route_id)
+                          }}
+                          title="Delete Route"
+                        >
+                          🗑️
+                        </button>
+                      </>
                     )}
                     {!isAdmin && (
                       <span onClick={() => handleRouteSelect(route.route_id)} style={{ cursor: 'pointer' }}>

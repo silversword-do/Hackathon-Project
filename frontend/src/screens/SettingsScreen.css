@@ -42,6 +42,13 @@
   border-bottom: 2px solid var(--border-color);
 }
 
+.settings-note {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  margin-bottom: 1rem;
+}
+
 .form-group {
   margin-bottom: 1.5rem;
 }

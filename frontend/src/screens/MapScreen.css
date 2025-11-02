@@ -9,6 +9,14 @@
   margin-bottom: 1.5rem;
 }
 
+.map-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
 .map-header h1 {
   font-size: 2.5rem;
   margin-bottom: 0.5rem;
@@ -18,6 +26,11 @@
 .map-header p {
   color: var(--text-secondary);
   font-size: 1.1rem;
+}
+
+.view-as-user-button {
+  white-space: nowrap;
+  align-self: center;
 }
 
 .map-controls-bar {
@@ -136,7 +149,28 @@
   flex-direction: column;
   gap: 1.5rem;
   overflow-y: auto;
+  overflow-x: hidden;
   max-height: 100%;
+  padding-right: 0.5rem;
+}
+
+/* Ensure route editor doesn't cut off content */
+.map-sidebar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.map-sidebar::-webkit-scrollbar-track {
+  background: var(--surface);
+  border-radius: 4px;
+}
+
+.map-sidebar::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+.map-sidebar::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-color);
 }
 
 .sidebar-section {
@@ -299,6 +333,15 @@
     max-height: 400px;
     overflow-y: auto;
   }
+
+  .map-header-top {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .view-as-user-button {
+    align-self: stretch;
+  }
 }
 
 /* Admin styles */
@@ -366,19 +409,29 @@
   }
 }
 
-.edit-route-button {
+.edit-route-button,
+.delete-route-button {
   background: none;
   border: none;
   cursor: pointer;
   font-size: 1.25rem;
-  padding: 0.25rem;
+  padding: 0.25rem 0.5rem;
   transition: transform 0.2s;
   opacity: 0.7;
 }
 
-.edit-route-button:hover {
+.edit-route-button:hover,
+.delete-route-button:hover {
   transform: scale(1.2);
   opacity: 1;
+}
+
+.delete-route-button {
+  color: #dc3545;
+}
+
+.delete-route-button:hover {
+  color: #c82333;
 }
 
 /* User location marker styles */

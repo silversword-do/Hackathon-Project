@@ -10,30 +10,15 @@ import { auth, db } from "../services/firebase";
 
 const AuthContext = createContext();
 
-// Admin email patterns - users with these emails will automatically get admin role
+// Admin emails - only specific emails listed here will get admin role
 const ADMIN_EMAILS = [
-  "admin",
-  "admin@",
-  "@admin",
-  "nic.cooper.999@gmail.com" // Add specific admin emails here
+  "nic.cooper.999@gmail.com" // Add specific admin emails here manually
 ];
 
-// Check if an email should be admin
+// Check if an email should be admin (only exact matches)
 function isAdminEmail(email) {
   if (!email) return false;
-  const emailLower = email.toLowerCase();
-  
-  // Check exact matches
-  if (ADMIN_EMAILS.some(pattern => emailLower.includes(pattern.toLowerCase()))) {
-    return true;
-  }
-  
-  // Check if email contains "admin" as a word
-  if (emailLower.includes("admin") || emailLower.startsWith("admin")) {
-    return true;
-  }
-  
-  return false;
+  return ADMIN_EMAILS.includes(email.toLowerCase());
 }
 
 export function AuthProvider({ children }) {
@@ -41,6 +26,7 @@ export function AuthProvider({ children }) {
   const [userRole, setUserRole] = useState("user");
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [viewAsUser, setViewAsUser] = useState(false); // Admin view-as-user mode
 
   useEffect(() => {
     // Listen for auth state changes
@@ -62,7 +48,7 @@ export function AuthProvider({ children }) {
             
             console.log(`User ${firebaseUser.email} current role: ${role}`);
             
-            // Auto-promote to admin if email matches admin pattern and not already admin
+            // Auto-promote to admin if email is in ADMIN_EMAILS list and not already admin
             if (!role || role === "user") {
               if (isAdminEmail(firebaseUser.email)) {
                 console.log(`Auto-promoting ${firebaseUser.email} to admin`);
@@ -201,16 +187,21 @@ export function AuthProvider({ children }) {
     }
   };
 
+  // If admin is viewing as user, temporarily show user view
+  const effectiveIsAdmin = userRole === "admin" && !viewAsUser;
+
   const value = {
     isAuthenticated,
     userRole,
-    isAdmin: userRole === "admin",
+    isAdmin: effectiveIsAdmin,
     user,
     loading,
     login,
     signup,
     logout,
     updateUserRole,
+    viewAsUser,
+    setViewAsUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
