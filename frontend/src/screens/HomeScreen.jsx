@@ -18,7 +18,7 @@ function HomeScreen() {
               }}
             />
           </span>
-          <h1>Welcome to OSU Transit App</h1>
+          <h1>Welcome to Pete's Ride Around</h1>
         </div>
         <p className="subtitle">
           Go Pokes! Your one-stop solution for bus transit information
