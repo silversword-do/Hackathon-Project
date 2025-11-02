@@ -27,7 +27,7 @@ function HomeScreen() {
 
       <div className="features-grid">
         <div className="feature-card">
-          <div className="feature-icon">🗺️</div>
+          <div className="feature-icon"></div>
           <h3>Route Planning</h3>
           <p>
             Find the best routes from origin to destination with multiple
@@ -36,7 +36,7 @@ function HomeScreen() {
         </div>
 
         <div className="feature-card">
-          <div className="feature-icon">🤠🚌</div>
+          <div className="feature-icon"></div>
           <h3>Real-time Tracking</h3>
           <p>
             Track Pistol Pete's buses in real-time with live location updates
@@ -45,7 +45,7 @@ function HomeScreen() {
         </div>
 
         <div className="feature-card">
-          <div className="feature-icon">📅</div>
+          <div className="feature-icon"></div>
           <h3>Schedule Viewing</h3>
           <p>
             View bus schedules by route and stop to plan your journey in

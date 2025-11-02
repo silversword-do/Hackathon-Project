@@ -35,7 +35,7 @@ class RoutePlanner:
         self.search_button.grid(row=2, column=1, pady=10)
         
         # Results area
-        ttk.Label(self.frame, text="Route Options:", font=('Arial', 10, 'bold')).grid(row=3, column=0, columnspan=3, sticky=tk.W, pady=(20, 5))
+        ttk.Label(self.frame, text="Route Options:", font=('Times New Roman', 10, 'bold')).grid(row=3, column=0, columnspan=3, sticky=tk.W, pady=(20, 5))
         
         # Create results treeview
         results_frame = ttk.Frame(self.frame)
@@ -63,7 +63,7 @@ class RoutePlanner:
         self.results_tree.bind('<<TreeviewSelect>>', self._on_route_select)
         
         # Route details area
-        details_label = ttk.Label(self.frame, text="Route Details:", font=('Arial', 10, 'bold'))
+        details_label = ttk.Label(self.frame, text="Route Details:", font=('Times New Roman', 10, 'bold'))
         details_label.grid(row=5, column=0, columnspan=3, sticky=tk.W, pady=(20, 5))
         
         self.details_text = tk.Text(self.frame, height=8, wrap=tk.WORD, state=tk.DISABLED)
