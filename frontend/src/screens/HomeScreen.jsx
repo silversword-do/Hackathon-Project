@@ -8,7 +8,7 @@ function HomeScreen() {
         <div className="osu-logo-section">
           <span className="pistol-pete-logo">
             <img
-              src="/bus-logo.png"
+              src="/site-logo.png"
               alt="BUS OK STATE"
               style={{
                 width: "128px", // or "64px" for a smaller icon
@@ -18,7 +18,7 @@ function HomeScreen() {
               }}
             />
           </span>
-          <h1>Welcome to OSU Transit App</h1>
+          <h1>Welcome to Pete's Ride Around</h1>
         </div>
         <p className="subtitle">
           Go Pokes! Your one-stop solution for bus transit information
