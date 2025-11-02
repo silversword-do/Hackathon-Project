@@ -157,12 +157,20 @@ function SettingsScreen() {
         <div className="settings-section">
           <h2>Account</h2>
           {user && (
-            <div className="form-group">
-              <label>Account ID</label>
-              <div className="account-id-display">
-                {user.uid}
+            <>
+              <div className="form-group">
+                <label>Account Name (Email)</label>
+                <div className="account-info-display">
+                  {user.email || 'No email associated'}
+                </div>
               </div>
-            </div>
+              <div className="form-group">
+                <label>Password</label>
+                <div className="account-info-display account-password-display">
+                  •••••••••••• (Encrypted - Cannot be displayed for security reasons)
+                </div>
+              </div>
+            </>
           )}
           <div className="form-group">
             <button 

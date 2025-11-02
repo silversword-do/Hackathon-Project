@@ -1,31 +1,12 @@
 import { Link, useLocation } from "react-router-dom";
-import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
-import { useFont } from "../context/FontContext";
 import "./Navigation.css";
 
 function Navigation() {
   const location = useLocation();
   const { userRole, viewAsUser, setViewAsUser } = useAuth();
-  const { fontStyle, setFontStyle, fontOptions } = useFont();
-  const [showFontDropdown, setShowFontDropdown] = useState(false);
-  const fontDropdownRef = useRef(null);
 
   const isActive = (path) => location.pathname === path;
-
-  // Close font dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (fontDropdownRef.current && !fontDropdownRef.current.contains(event.target)) {
-        setShowFontDropdown(false);
-      }
-    };
-
-    if (showFontDropdown) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }
-  }, [showFontDropdown]);
 
   return (
     <>
@@ -46,34 +27,6 @@ function Navigation() {
               />
               <span style={{ display: "none" }}>BUS OK STATE</span>
             </Link>
-          </div>
-          <div className="nav-controls">
-            <div className="font-dropdown-wrapper" ref={fontDropdownRef}>
-              <button
-                className="nav-button font-dropdown-button"
-                onClick={() => setShowFontDropdown(!showFontDropdown)}
-                title="Change font style"
-              >
-                🔤 Font
-              </button>
-              {showFontDropdown && (
-                <div className="font-dropdown-menu">
-                  {fontOptions.map((font) => (
-                    <button
-                      key={font.value}
-                      className={`font-option ${fontStyle === font.value ? 'active' : ''}`}
-                      onClick={() => {
-                        setFontStyle(font.value)
-                        setShowFontDropdown(false)
-                      }}
-                      style={{ fontFamily: font.family }}
-                    >
-                      {font.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
           </div>
           <ul className="nav-links">
             <li>

@@ -108,12 +108,12 @@
 }
 
 :root.dark-theme .nav-links a {
-  color: var(--osu-black);
+  color: var(--osu-white);
 }
 
 :root.dark-theme .nav-links a:hover {
-  background-color: rgba(0, 0, 0, 0.1);
-  color: var(--osu-black);
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--osu-white);
 }
 
 :root.dark-theme .nav-links a.active {
@@ -122,12 +122,12 @@
 }
 
 :root.dark-theme .nav-button {
-  color: var(--osu-black);
+  color: var(--osu-white);
 }
 
 :root.dark-theme .nav-button:hover {
-  background-color: rgba(0, 0, 0, 0.1);
-  color: var(--osu-black);
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--osu-white);
 }
 
 :root.dark-theme .mobile-nav-tabs {
@@ -141,84 +141,6 @@
 
 :root.dark-theme .mobile-nav-tab.active {
   color: var(--osu-orange);
-}
-
-/* Font dropdown styles */
-.nav-controls {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.font-dropdown-wrapper {
-  position: relative;
-}
-
-.font-dropdown-button {
-  background: none;
-  border: none;
-  color: var(--osu-white);
-  text-decoration: none;
-  font-weight: 500;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  transition: all 0.2s;
-  cursor: pointer;
-  font-family: inherit;
-  font-size: inherit;
-}
-
-.font-dropdown-button:hover {
-  background-color: rgba(255, 102, 0, 0.2);
-  color: var(--osu-orange-light);
-}
-
-.font-dropdown-menu {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  margin-top: 0.5rem;
-  background: var(--surface);
-  border: 2px solid var(--border-color);
-  border-radius: 0.5rem;
-  box-shadow: var(--shadow-lg);
-  z-index: 1000;
-  min-width: 200px;
-  max-height: 300px;
-  overflow-y: auto;
-}
-
-.font-option {
-  display: block;
-  width: 100%;
-  padding: 0.75rem 1rem;
-  background: none;
-  border: none;
-  text-align: left;
-  cursor: pointer;
-  font-family: inherit;
-  font-size: 1rem;
-  color: var(--text-primary);
-  transition: background-color 0.2s;
-  font-family: var(--app-font-family, inherit);
-}
-
-.font-option:hover {
-  background-color: var(--background);
-}
-
-.font-option.active {
-  background-color: var(--primary-color);
-  color: var(--osu-white);
-}
-
-:root.dark-theme .font-dropdown-button {
-  color: var(--osu-black);
-}
-
-:root.dark-theme .font-dropdown-button:hover {
-  background-color: rgba(0, 0, 0, 0.1);
-  color: var(--osu-black);
 }
 
 /* Mobile bottom tab bar */

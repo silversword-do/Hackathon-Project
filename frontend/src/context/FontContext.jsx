@@ -15,9 +15,9 @@ const FONT_OPTIONS = [
 
 export function FontProvider({ children }) {
   const [fontStyle, setFontStyle] = useState(() => {
-    // Load font from localStorage or default to 'default'
+    // Load font from localStorage or default to 'comic' (Comic Sans)
     const savedFont = localStorage.getItem('fontStyle')
-    return savedFont || 'default'
+    return savedFont || 'comic'
   })
 
   useEffect(() => {

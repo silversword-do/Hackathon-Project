@@ -52,72 +52,6 @@ function calculateDistance(lat1, lng1, lat2, lng2) {
   return R * c
 }
 
-// Offset a polyline perpendicularly to avoid overlapping routes
-// Returns new coordinates offset by a small amount (in degrees)
-function offsetPolyline(positions, offsetIndex, offsetDistance = 0.0002) {
-  if (!positions || positions.length < 2) return positions
-  
-  const offset = offsetDistance * offsetIndex // Stagger routes
-  const result = []
-  
-  for (let i = 0; i < positions.length; i++) {
-    const [lat, lng] = positions[i]
-    
-    if (i === 0) {
-      // First point: offset perpendicular to first segment
-      if (positions.length > 1) {
-        const [nextLat, nextLng] = positions[i + 1]
-        const dx = nextLng - lng
-        const dy = nextLat - lat
-        const length = Math.sqrt(dx * dx + dy * dy)
-        if (length > 0) {
-          // Perpendicular offset: swap dx/dy and negate one
-          const perpLat = lat - (dx / length) * offset
-          const perpLng = lng + (dy / length) * offset
-          result.push([perpLat, perpLng])
-        } else {
-          result.push([lat, lng])
-        }
-      } else {
-        result.push([lat, lng])
-      }
-    } else if (i === positions.length - 1) {
-      // Last point: offset perpendicular to last segment
-      const [prevLat, prevLng] = positions[i - 1]
-      const dx = lng - prevLng
-      const dy = lat - prevLat
-      const length = Math.sqrt(dx * dx + dy * dy)
-      if (length > 0) {
-        const perpLat = lat - (dx / length) * offset
-        const perpLng = lng + (dy / length) * offset
-        result.push([perpLat, perpLng])
-      } else {
-        result.push([lat, lng])
-      }
-    } else {
-      // Middle points: offset perpendicular to average of adjacent segments
-      const [prevLat, prevLng] = positions[i - 1]
-      const [nextLat, nextLng] = positions[i + 1]
-      const dx1 = lng - prevLng
-      const dy1 = lat - prevLat
-      const dx2 = nextLng - lng
-      const dy2 = nextLat - lat
-      const avgDx = (dx1 + dx2) / 2
-      const avgDy = (dy1 + dy2) / 2
-      const length = Math.sqrt(avgDx * avgDx + avgDy * avgDy)
-      if (length > 0) {
-        const perpLat = lat - (avgDx / length) * offset
-        const perpLng = lng + (avgDy / length) * offset
-        result.push([perpLat, perpLng])
-      } else {
-        result.push([lat, lng])
-      }
-    }
-  }
-  
-  return result
-}
-
 // Component to center map on location and set bounds
 function MapController({ center, zoom, bounds, userLocation, shouldCenterOnUser }) {
   const map = useMap()
@@ -910,15 +844,12 @@ function MapScreen() {
             {showRoutes && routes
               .filter(route => route.stops && route.stops.length > 0)
               .map((route, index) => {
-                // Get calculated road path or fallback to straight line
-                const baseRoutePath = routePaths[route.route_id] || 
+                // Get calculated road path or fallback to straight line - routes stay on roads (no offset)
+                const routePath = routePaths[route.route_id] || 
                   route.stops.map(stop => {
                     const stopLng = stop.lon !== undefined ? stop.lon : stop.lng
                     return [stop.lat, stopLng]
                   })
-                
-                // Offset route spatially to avoid overlapping (alternating offset)
-                const routePath = offsetPolyline(baseRoutePath, index % 2 === 0 ? index / 2 : -(index + 1) / 2)
                 
                 const isSelected = selectedRoute === route.route_id
 
