@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext'
 import './SettingsScreen.css'
 
 function SettingsScreen() {
-  const { logout, isAdmin } = useAuth()
+  const { logout, isAdmin, user } = useAuth()
   const [settings, setSettings] = useState({
     apiKey: '',
     apiUrl: '',
@@ -142,6 +142,14 @@ function SettingsScreen() {
 
         <div className="settings-section">
           <h2>Account</h2>
+          {user && (
+            <div className="form-group">
+              <label>Account ID</label>
+              <div className="account-id-display">
+                {user.uid}
+              </div>
+            </div>
+          )}
           <div className="form-group">
             <button 
               type="button" 

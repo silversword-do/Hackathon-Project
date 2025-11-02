@@ -68,7 +68,7 @@
   gap: 1.5rem;
   flex: 1;
   min-height: 500px;
-  max-height: calc(100vh - 280px);
+  max-height: calc((100vh - 280px) * 2);
   overflow: hidden;
 }
 

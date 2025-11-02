@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap, Circle } from 'react-leaflet'
 import { useAuth } from '../context/AuthContext'
 import { fetchOSURoutes, fetchOSUStops, saveOSURoutes } from '../services/api'
-import { getRoutePathForStops } from '../services/routingService'
+import { getRoutePathForStops, getRoutePath } from '../services/routingService'
 import RouteEditor from '../components/RouteEditor'
 import './MapScreen.css'
 import 'leaflet/dist/leaflet.css'
@@ -44,6 +44,19 @@ const MAP_BOUNDS = [
   [36.0950, -97.0900], // Southwest corner
   [36.1510, -97.0520]  // Northeast corner
 ]
+
+// Calculate distance between two coordinates using Haversine formula (returns distance in meters)
+function calculateDistance(lat1, lng1, lat2, lng2) {
+  const R = 6371000 // Earth radius in meters
+  const dLat = (lat2 - lat1) * Math.PI / 180
+  const dLng = (lng2 - lng1) * Math.PI / 180
+  const a = 
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLng / 2) * Math.sin(dLng / 2)
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+  return R * c
+}
 
 // Component to center map on location and set bounds
 function MapController({ center, zoom, bounds, userLocation }) {
@@ -106,6 +119,10 @@ function MapScreen() {
   // Using object instead of Map for React state compatibility
   const [routePaths, setRoutePaths] = useState({})
   const [calculatingRoutes, setCalculatingRoutes] = useState(false)
+  
+  // Closest bus stop state
+  const [closestStop, setClosestStop] = useState(null)
+  const [pathToClosestStop, setPathToClosestStop] = useState([])
 
   useEffect(() => {
     loadMapData()
@@ -190,6 +207,27 @@ function MapScreen() {
       setCalculatingRoutes(false)
     }
   }
+
+  // Find the closest bus stop to user location
+  const findClosestStop = useCallback((userLat, userLng) => {
+    if (!stops || stops.length === 0) return null
+    
+    let closest = null
+    let minDistance = Infinity
+    
+    for (const stop of stops) {
+      if (stop.lat !== undefined && stop.lat !== null && 
+          stop.lon !== undefined && stop.lon !== null) {
+        const distance = calculateDistance(userLat, userLng, stop.lat, stop.lon)
+        if (distance < minDistance) {
+          minDistance = distance
+          closest = stop
+        }
+      }
+    }
+    
+    return closest
+  }, [stops])
 
   const handleRouteSelect = (routeId) => {
     setSelectedRoute(selectedRoute === routeId ? null : routeId)
@@ -499,6 +537,46 @@ function MapScreen() {
     await getCurrentLocation()
   }
 
+  // Update closest stop and path when user location or stops change
+  useEffect(() => {
+    const updateClosestStopPath = async () => {
+      if (!userLocation || !userLocation.lat || !userLocation.lng || !stops || stops.length === 0) {
+        setClosestStop(null)
+        setPathToClosestStop([])
+        return
+      }
+
+      const closest = findClosestStop(userLocation.lat, userLocation.lng)
+      
+      if (closest) {
+        setClosestStop(closest)
+        
+        // Calculate path from user location to closest stop
+        try {
+          const stopLng = closest.lon !== undefined ? closest.lon : closest.lng
+          const path = await getRoutePath(
+            { lat: userLocation.lat, lng: userLocation.lng },
+            { lat: closest.lat, lng: stopLng }
+          )
+          setPathToClosestStop(path)
+        } catch (error) {
+          console.error('Error calculating path to closest stop:', error)
+          // Fallback to straight line
+          const stopLng = closest.lon !== undefined ? closest.lon : closest.lng
+          setPathToClosestStop([
+            [userLocation.lat, userLocation.lng],
+            [closest.lat, stopLng]
+          ])
+        }
+      } else {
+        setClosestStop(null)
+        setPathToClosestStop([])
+      }
+    }
+
+    updateClosestStopPath()
+  }, [userLocation, stops, findClosestStop])
+
 
   if (loading) {
     return (
@@ -684,6 +762,19 @@ function MapScreen() {
                   fillOpacity: 0.1,
                   weight: 2,
                   opacity: 0.5
+                }}
+              />
+            )}
+
+            {/* Blue path from user location to closest bus stop */}
+            {pathToClosestStop && pathToClosestStop.length > 0 && (
+              <Polyline
+                positions={pathToClosestStop}
+                color="#4285F4"
+                weight={4}
+                opacity={0.8}
+                pathOptions={{
+                  interactive: false
                 }}
               />
             )}
