@@ -80,7 +80,7 @@ function LoginScreen() {
       <div className="login-container">
         <div className="login-header">
           <div className="pistol-pete-large"></div>
-          <h1>OSU Transit App</h1>
+          <h1>Pete's Ride Along</h1>
           <p>Go Pokes! {isSignUp ? "Create an account" : "Please sign in to continue"}</p>
         </div>
 

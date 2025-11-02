@@ -3,7 +3,8 @@ import { createContext, useContext, useState, useEffect } from 'react'
 const FontContext = createContext()
 
 const FONT_OPTIONS = [
-  { value: 'default', label: 'Default', family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' },
+  { value: 'default', label: 'System Default', family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' },
+  { value: 'work-sans', label: 'Work Sans', family: '"Work Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' },
   { value: 'arial', label: 'Arial', family: 'Arial, sans-serif' },
   { value: 'times', label: 'Times New Roman', family: '"Times New Roman", Times, serif' },
   { value: 'courier', label: 'Courier New', family: '"Courier New", Courier, monospace' },
@@ -15,9 +16,9 @@ const FONT_OPTIONS = [
 
 export function FontProvider({ children }) {
   const [fontStyle, setFontStyle] = useState(() => {
-    // Load font from localStorage or default to 'comic' (Comic Sans)
+    // Load font from localStorage or default to 'default' (System Default)
     const savedFont = localStorage.getItem('fontStyle')
-    return savedFont || 'comic'
+    return savedFont || 'default'
   })
 
   useEffect(() => {
