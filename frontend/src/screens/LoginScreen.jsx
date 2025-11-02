@@ -1,44 +1,101 @@
-import { useState } from 'react'
-import { useAuth } from '../context/AuthContext'
-import './LoginScreen.css'
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import "./LoginScreen.css";
 
 function LoginScreen() {
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const { login } = useAuth()
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const { login, signup } = useAuth();
+  const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    setError('')
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+    setLoading(true);
 
-    // Dummy account credentials
-    if (username === 'dummy' && password === '123') {
-      login()
-    } else {
-      setError('Invalid username or password')
+    try {
+      if (isSignUp) {
+        // Sign up
+        if (password !== confirmPassword) {
+          setError("Passwords do not match");
+          setLoading(false);
+          return;
+        }
+
+        if (password.length < 6) {
+          setError("Password must be at least 6 characters");
+          setLoading(false);
+          return;
+        }
+
+        const result = await signup(email, password);
+        if (result.success) {
+          setSuccess("Account created successfully! Redirecting...");
+          // Navigation will happen automatically when isAuthenticated becomes true
+          // via the onAuthStateChanged listener, but we can navigate immediately for better UX
+          setTimeout(() => {
+            navigate("/");
+          }, 500);
+        } else {
+          setError(result.error);
+        }
+      } else {
+        // Sign in
+        const result = await login(email, password);
+        if (result.success) {
+          setSuccess("Signed in successfully! Redirecting...");
+          // Navigation will happen automatically when isAuthenticated becomes true
+          // via the onAuthStateChanged listener, but we can navigate immediately for better UX
+          setTimeout(() => {
+            navigate("/");
+          }, 500);
+        } else {
+          setError(result.error);
+        }
+      }
+    } catch (err) {
+      setError("An unexpected error occurred. Please try again.");
+    } finally {
+      setLoading(false);
     }
-  }
+  };
+
+  const toggleMode = () => {
+    setIsSignUp(!isSignUp);
+    setError("");
+    setSuccess("");
+    setPassword("");
+    setConfirmPassword("");
+  };
 
   return (
     <div className="login-screen">
       <div className="login-container">
         <div className="login-header">
-          <h1>Transit App</h1>
-          <p>Please sign in to continue</p>
+          <div className="pistol-pete-large"></div>
+          <h1>OSU Transit App</h1>
+          <p>Go Pokes! {isSignUp ? "Create an account" : "Please sign in to continue"}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="login-form">
           {error && <div className="error-message">{error}</div>}
-          
+          {success && <div className="success-message">{success}</div>}
+
           <div className="form-group">
-            <label htmlFor="username">Username</label>
+            <label htmlFor="email">Email</label>
             <input
-              type="text"
-              id="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Enter username"
+              type="email"
+              id="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
               className="form-input"
               required
               autoFocus
@@ -58,19 +115,40 @@ function LoginScreen() {
             />
           </div>
 
-          <button type="submit" className="login-button">
-            Sign In
+          {isSignUp && (
+            <div className="form-group">
+              <label htmlFor="confirmPassword">Confirm Password</label>
+              <input
+                type="password"
+                id="confirmPassword"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Confirm password"
+                className="form-input"
+                required
+              />
+            </div>
+          )}
+
+          <button type="submit" className="login-button" disabled={loading}>
+            {loading ? "Please wait..." : isSignUp ? "Create Account" : "Sign In"}
           </button>
         </form>
 
-        <div className="login-hint">
-          <p>Demo credentials:</p>
-          <p>Username: <strong>dummy</strong> | Password: <strong>123</strong></p>
+        <div className="login-footer">
+          <button
+            type="button"
+            onClick={toggleMode}
+            className="toggle-mode-button"
+          >
+            {isSignUp
+              ? "Already have an account? Sign In"
+              : "Don't have an account? Sign Up"}
+          </button>
         </div>
       </div>
     </div>
-  )
+  );
 }
 
-export default LoginScreen
-
+export default LoginScreen;

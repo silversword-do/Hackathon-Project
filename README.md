@@ -37,6 +37,21 @@ provider = default
 2. Replace `YOUR_API_KEY_HERE` with your actual API key
 3. Update `api_url` with your transit API endpoint URL
 
+### OSU Bus Routes (GTFS Data)
+
+The application automatically downloads and integrates Oklahoma State University (OSU) bus route data from their GTFS feed. This includes:
+
+- **All OSU bus routes** with complete stop information
+- **Real stop coordinates** (latitude/longitude) for mapping
+- **Bus schedules** with departure and arrival times
+- **Automatic data loading** on first use
+
+**GTFS Data Source**: https://shuttle.okstate.edu/gtfs_google/gtfs.zip
+
+The GTFS data is cached locally after the first download for faster subsequent loads. To force a refresh, you can delete the cached data in the `data/gtfs_cache/` directory.
+
+**Note**: If the GTFS download fails (e.g., no internet connection), the application will fall back to sample data.
+
 ### Running the Application
 
 From the project root directory, run:
@@ -85,14 +100,17 @@ Hackathone-Project/
 │   ├── api/                 # API integration
 │   │   ├── api_adapter.py   # Abstract API interface
 │   │   ├── transit_client.py # API client
-│   │   └── config.py        # API configuration
+│   │   ├── config.py        # API configuration
+│   │   ├── mock_data.py     # Mock/sample data (with OSU GTFS integration)
+│   │   └── osu_data.py      # OSU bus route data loader
 │   ├── models/              # Data models
 │   │   ├── route.py         # Route model
 │   │   ├── stop.py          # Stop model
 │   │   ├── schedule.py      # Schedule model
 │   │   └── bus.py           # Bus model
 │   └── utils/               # Utility functions
-│       └── helpers.py
+│       ├── helpers.py       # Helper utilities
+│       └── gtfs_parser.py   # GTFS data parser
 ├── config.ini               # API configuration
 ├── requirements.txt          # Dependencies
 └── README.md                # This file

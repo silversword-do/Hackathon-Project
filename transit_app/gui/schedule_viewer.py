@@ -68,7 +68,7 @@ class ScheduleViewer:
         self.schedule_tree.bind('<<TreeviewSelect>>', self._on_schedule_select)
         
         # Schedule details area
-        details_label = ttk.Label(self.frame, text="Schedule Details:", font=('Arial', 10, 'bold'))
+        details_label = ttk.Label(self.frame, text="Schedule Details:", font=('Times New Roman', 10, 'bold'))
         details_label.grid(row=3, column=0, columnspan=3, sticky=tk.W, pady=(20, 5))
         
         self.details_text = tk.Text(self.frame, height=8, wrap=tk.WORD, state=tk.DISABLED)

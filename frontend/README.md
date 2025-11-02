@@ -2,6 +2,8 @@
 
 React frontend application for the Transit App with authentication and three main screens: Home, Map, and Settings.
 
+**Now Available as a Mobile App!** This app has been converted to a mobile application using Capacitor. It can be built for both iOS and Android devices.
+
 ## Features
 
 - **Login Screen**: Secure authentication with demo credentials
@@ -72,11 +74,66 @@ frontend/
 └── vite.config.js
 ```
 
+## Mobile App Setup
+
+This app uses **Capacitor** to run as a native mobile application on iOS and Android.
+
+### Building for Mobile
+
+1. **Build the web app:**
+   ```bash
+   npm run build
+   ```
+
+2. **Add mobile platforms (first time only):**
+   ```bash
+   npm run cap:add:ios      # For iOS
+   npm run cap:add:android  # For Android
+   ```
+
+3. **Sync Capacitor (after building):**
+   ```bash
+   npm run cap:sync
+   ```
+
+   Or use the combined command:
+   ```bash
+   npm run cap:build
+   ```
+
+4. **Open in native IDE:**
+   ```bash
+   npm run cap:open:ios      # Opens in Xcode
+   npm run cap:open:android  # Opens in Android Studio
+   ```
+
+### Mobile Features
+
+- ✅ **Bottom Tab Navigation** - Mobile-friendly navigation bar
+- ✅ **Native Status Bar** - Configured for mobile devices
+- ✅ **Splash Screen** - Native splash screen support
+- ✅ **Safe Area Support** - Respects iOS notch and Android navigation bars
+- ✅ **Touch Optimizations** - Optimized for mobile touch interactions
+- ✅ **Responsive Design** - Adapts between desktop and mobile layouts
+
+### Mobile Requirements
+
+#### iOS
+- macOS with Xcode installed
+- CocoaPods (installed automatically)
+- iOS 13+ target
+
+#### Android
+- Android Studio installed
+- Android SDK configured
+- Minimum SDK version: 21 (Android 5.0)
+
 ## Technologies
 
 - **React 18** - UI library
 - **React Router DOM** - Navigation and routing
 - **Vite** - Build tool and dev server
+- **Capacitor** - Native mobile framework
 - **CSS** - Styling with CSS variables for theming
 
 ## Authentication

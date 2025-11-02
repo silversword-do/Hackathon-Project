@@ -1,17 +1,24 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
 import './SettingsScreen.css'
 
 function SettingsScreen() {
-  const { logout } = useAuth()
+  const { logout, isAdmin, user } = useAuth()
+  const { theme, setTheme: setThemeState } = useTheme()
   const [settings, setSettings] = useState({
     apiKey: '',
     apiUrl: '',
     autoRefresh: true,
     refreshInterval: 30,
-    theme: 'light',
+    theme: theme,
     notifications: true
   })
+
+  // Sync settings theme with theme context
+  useEffect(() => {
+    setSettings(prev => ({ ...prev, theme }))
+  }, [theme])
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target
@@ -19,6 +26,11 @@ function SettingsScreen() {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }))
+    
+    // Update theme context when theme changes
+    if (name === 'theme') {
+      setThemeState(value)
+    }
   }
 
   const handleSave = (e) => {
@@ -28,14 +40,16 @@ function SettingsScreen() {
   }
 
   const handleReset = () => {
-    setSettings({
+    const resetSettings = {
       apiKey: '',
       apiUrl: '',
       autoRefresh: true,
       refreshInterval: 30,
       theme: 'light',
       notifications: true
-    })
+    }
+    setSettings(resetSettings)
+    setThemeState('light')
   }
 
   return (
@@ -46,35 +60,38 @@ function SettingsScreen() {
       </div>
 
       <form onSubmit={handleSave} className="settings-form">
-        <div className="settings-section">
-          <h2>API Configuration</h2>
-          
-          <div className="form-group">
-            <label htmlFor="apiKey">API Key</label>
-            <input
-              type="password"
-              id="apiKey"
-              name="apiKey"
-              value={settings.apiKey}
-              onChange={handleInputChange}
-              placeholder="Enter your API key"
-              className="form-input"
-            />
-          </div>
+        {isAdmin && (
+          <div className="settings-section">
+            <h2>API Configuration</h2>
+            <p className="settings-note">Admin-only settings</p>
+            
+            <div className="form-group">
+              <label htmlFor="apiKey">API Key</label>
+              <input
+                type="password"
+                id="apiKey"
+                name="apiKey"
+                value={settings.apiKey}
+                onChange={handleInputChange}
+                placeholder="Enter your API key"
+                className="form-input"
+              />
+            </div>
 
-          <div className="form-group">
-            <label htmlFor="apiUrl">API URL</label>
-            <input
-              type="url"
-              id="apiUrl"
-              name="apiUrl"
-              value={settings.apiUrl}
-              onChange={handleInputChange}
-              placeholder="https://api.example.com/transit"
-              className="form-input"
-            />
+            <div className="form-group">
+              <label htmlFor="apiUrl">API URL</label>
+              <input
+                type="url"
+                id="apiUrl"
+                name="apiUrl"
+                value={settings.apiUrl}
+                onChange={handleInputChange}
+                placeholder="https://api.example.com/transit"
+                className="form-input"
+              />
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="settings-section">
           <h2>Preferences</h2>
@@ -139,6 +156,22 @@ function SettingsScreen() {
 
         <div className="settings-section">
           <h2>Account</h2>
+          {user && (
+            <>
+              <div className="form-group">
+                <label>Account Name (Email)</label>
+                <div className="account-info-display">
+                  {user.email || 'No email associated'}
+                </div>
+              </div>
+              <div className="form-group">
+                <label>Password</label>
+                <div className="account-info-display account-password-display">
+                  •••••••••••• (Encrypted - Cannot be displayed for security reasons)
+                </div>
+              </div>
+            </>
+          )}
           <div className="form-group">
             <button 
               type="button" 

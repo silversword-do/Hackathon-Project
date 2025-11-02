@@ -5,32 +5,91 @@
 }
 
 :root {
-  --primary-color: #2563eb;
-  --primary-hover: #1d4ed8;
-  --secondary-color: #64748b;
-  --background: #f8fafc;
-  --surface: #ffffff;
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --border-color: #e2e8f0;
+  /* Oklahoma State University Colors */
+  --osu-orange: #FF6600;
+  --osu-orange-hover: #E55A00;
+  --osu-orange-light: #FF8C42;
+  --osu-black: #000000;
+  --osu-white: #FFFFFF;
+  --osu-gray: #2C2C2C;
+  
+  /* Light Theme Variables (default) */
+  --primary-color: var(--osu-orange);
+  --primary-hover: var(--osu-orange-hover);
+  --secondary-color: var(--osu-gray);
+  --background: #FFF8F0;
+  --surface: var(--osu-white);
+  --text-primary: var(--osu-black);
+  --text-secondary: #4A4A4A;
+  --border-color: #E0E0E0;
   --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(255, 102, 0, 0.2), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+}
+
+/* Dark Theme - Inverted Colors */
+:root.dark-theme {
+  /* Keep OSU colors the same */
+  --osu-orange: #FF6600;
+  --osu-orange-hover: #E55A00;
+  --osu-orange-light: #FF8C42;
+  --osu-black: #000000;
+  --osu-white: #FFFFFF;
+  --osu-gray: #2C2C2C;
+  
+  /* Inverted Theme Variables */
+  --primary-color: var(--osu-orange);
+  --primary-hover: var(--osu-orange-hover);
+  --secondary-color: #D3D3D3;
+  --background: #1A1A1A;
+  --surface: #2C2C2C;
+  --text-primary: #FFFFFF;
+  --text-secondary: #B0B0B0;
+  --border-color: #404040;
+  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.5), 0 1px 2px -1px rgb(0 0 0 / 0.5);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.5);
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+  font-family: var(--app-font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+    sans-serif);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--background);
   color: var(--text-primary);
   line-height: 1.6;
+  /* Prevent text selection on mobile for better app-like experience */
+  -webkit-tap-highlight-color: transparent;
+  /* Prevent pull-to-refresh on mobile */
+  overscroll-behavior-y: none;
 }
 
 #root {
   min-height: 100vh;
+  min-height: -webkit-fill-available; /* iOS Safari fix */
   display: flex;
   flex-direction: column;
+  /* Account for safe areas on mobile devices */
+  padding-top: env(safe-area-inset-top);
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  #root {
+    height: 100vh;
+    height: -webkit-fill-available;
+  }
+  
+  /* Allow scrolling within main content */
+  .app {
+    height: 100%;
+    overflow: hidden;
+  }
+  
+  .main-content {
+    height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  }
 }
 

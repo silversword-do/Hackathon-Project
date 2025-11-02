@@ -1,0 +1,31 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users collection - users can read/write their own document
+    match /users/{userId} {
+      // Allow users to read any user document (needed for admin checks)
+      allow read: if request.auth != null;
+      
+      // Allow users to create and update their own document
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow update: if request.auth != null && request.auth.uid == userId;
+      
+      // Prevent deletion
+      allow delete: if false;
+    }
+    
+    // Routes collection - everyone can read, only admins can write/delete
+    match /routes/{routeId} {
+      // Allow authenticated users to read routes
+      allow read: if request.auth != null;
+      
+      // Only allow admins to create/update/delete routes
+      allow create, update: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      
+      allow delete: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+  }
+}
+

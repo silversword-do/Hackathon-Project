@@ -10,11 +10,18 @@
   max-width: 1200px;
   width: 100%;
   margin: 0 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* Add safe area insets for mobile devices */
+  padding-left: calc(1rem + env(safe-area-inset-left));
+  padding-right: calc(1rem + env(safe-area-inset-right));
 }
 
 @media (max-width: 768px) {
   .main-content {
     padding: 1rem;
+    padding-top: calc(1rem + env(safe-area-inset-top));
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom)); /* Extra space for bottom nav */
   }
 }
 
