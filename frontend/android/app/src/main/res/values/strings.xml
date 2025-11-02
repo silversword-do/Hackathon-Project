@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Bus OK State</string>
+    <string name="title_activity_main">Bus OK State</string>
+    <string name="package_name">com.busokstate.app</string>
+    <string name="custom_url_scheme">com.busokstate.app</string>
+</resources>

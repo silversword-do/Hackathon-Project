@@ -1,0 +1,5 @@
+{
+  "appId": "com.busokstate.app",
+  "appName": "Bus OK State",
+  "webDir": "www--web-dir=\"dist\""
+}
