@@ -8,6 +8,11 @@ function RouteEditor({ route, onSave, onCancel, onDelete, allStops }) {
   const [selectedStops, setSelectedStops] = useState(
     route?.stops?.map((s) => s.stop_id) || []
   );
+  
+  // Bus configuration state
+  const [busCount, setBusCount] = useState(route?.busConfig?.count || 0);
+  const [busDirection, setBusDirection] = useState(route?.busConfig?.direction || "forward");
+  const [busStartPosition, setBusStartPosition] = useState(route?.busConfig?.startPosition || 0);
 
   const handleSave = () => {
     const stops = allStops.filter((s) => selectedStops.includes(s.stop_id));
@@ -16,6 +21,11 @@ function RouteEditor({ route, onSave, onCancel, onDelete, allStops }) {
       name,
       color,
       stops: stops,
+      busConfig: {
+        count: Math.max(0, Math.min(busCount, 10)), // Limit to 0-10 buses
+        direction: busDirection,
+        startPosition: Math.max(0, Math.min(busStartPosition, 1)), // 0-1 range
+      },
     };
     onSave(routeData);
   };
@@ -95,6 +105,48 @@ function RouteEditor({ route, onSave, onCancel, onDelete, allStops }) {
                 <span>{stop.name}</span>
               </label>
             ))}
+          </div>
+        </div>
+
+        <div className="form-group">
+          <label>Bus Configuration</label>
+          <div className="bus-config-section">
+            <div className="bus-config-item">
+              <label>Number of Buses</label>
+              <input
+                type="number"
+                min="0"
+                max="10"
+                value={busCount}
+                onChange={(e) => setBusCount(parseInt(e.target.value) || 0)}
+                placeholder="0"
+              />
+              <span className="config-hint">(0-10 buses per route)</span>
+            </div>
+            
+            <div className="bus-config-item">
+              <label>Direction</label>
+              <select
+                value={busDirection}
+                onChange={(e) => setBusDirection(e.target.value)}
+              >
+                <option value="forward">Forward (Start to End)</option>
+                <option value="reverse">Reverse (End to Start)</option>
+              </select>
+            </div>
+            
+            <div className="bus-config-item">
+              <label>Start Position</label>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={busStartPosition * 100}
+                onChange={(e) => setBusStartPosition(parseFloat(e.target.value) / 100)}
+              />
+              <span className="config-value">{Math.round(busStartPosition * 100)}%</span>
+              <span className="config-hint">(Position along route: 0% = start, 100% = end)</span>
+            </div>
           </div>
         </div>
 

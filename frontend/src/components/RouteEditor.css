@@ -4,10 +4,12 @@
   border-radius: 1rem;
   box-shadow: var(--shadow);
   margin-bottom: 1.5rem;
-  min-height: 500px;
+  min-height: auto;
+  max-height: none;
   flex-shrink: 0;
   z-index: 1000;
   position: relative;
+  overflow-y: visible;
 }
 
 .route-editor-header {
@@ -190,5 +192,61 @@
 .cancel-button:hover {
   background: var(--surface);
   border-color: var(--primary-color);
+}
+
+.bus-config-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--background);
+  border: 2px solid var(--border-color);
+  border-radius: 0.5rem;
+}
+
+.bus-config-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.bus-config-item label {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.bus-config-item input[type="number"],
+.bus-config-item select {
+  padding: 0.75rem;
+  border: 2px solid var(--border-color);
+  border-radius: 0.5rem;
+  background: var(--surface);
+  color: var(--text-primary);
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.bus-config-item input[type="number"]:focus,
+.bus-config-item select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.bus-config-item input[type="range"] {
+  width: 100%;
+  margin: 0.5rem 0;
+}
+
+.bus-config-item .config-value {
+  font-weight: 600;
+  color: var(--primary-color);
+  font-size: 1rem;
+}
+
+.config-hint {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-style: italic !important;
 }
 

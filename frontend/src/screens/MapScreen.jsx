@@ -3,6 +3,8 @@ import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap, Circle } from
 import { useAuth } from '../context/AuthContext'
 import { fetchOSURoutes, fetchOSUStops, saveOSURoutes } from '../services/api'
 import { getRoutePathForStops, getRoutePath } from '../services/routingService'
+import { initializeBuses, updateBusPositions, getBusRotation } from '../services/busSimulation'
+import { saveBusToFirebase, saveBusesForRoute } from '../services/firebaseBuses'
 import RouteEditor from '../components/RouteEditor'
 import './MapScreen.css'
 import 'leaflet/dist/leaflet.css'
@@ -147,6 +149,10 @@ function MapScreen() {
   // Route stops dropdown state
   const [showRouteStopsDropdown, setShowRouteStopsDropdown] = useState(false)
   const routeStopsDropdownRef = useRef(null)
+  
+  // Bus simulation state
+  const [buses, setBuses] = useState({}) // { routeId: [bus objects] }
+  const busUpdateIntervalRef = useRef(null)
 
   useEffect(() => {
     loadMapData()
@@ -231,12 +237,41 @@ function MapScreen() {
       }
 
       setRoutePaths(newRoutePaths)
+      
+      // Initialize buses after paths are calculated
+      const routesWithPaths = routesToCalculate.filter(r => 
+        newRoutePaths[r.route_id] && newRoutePaths[r.route_id].length >= 2
+      )
+      if (routesWithPaths.length > 0) {
+        initializeBusesForRoutes(routesWithPaths)
+      }
     } catch (error) {
       console.error('Error calculating route paths:', error)
     } finally {
       setCalculatingRoutes(false)
     }
   }
+  
+  // Initialize buses for all routes
+  const initializeBusesForRoutes = useCallback((routesToInit = routes) => {
+    if (!routesToInit || routesToInit.length === 0) return
+    
+    const newBuses = {}
+    
+    routesToInit.forEach(route => {
+      if (route.busConfig && route.busConfig.count > 0) {
+        const path = routePaths[route.route_id]
+        if (path && path.length >= 2) {
+          const routeBuses = initializeBuses(route, path)
+          if (routeBuses.length > 0) {
+            newBuses[route.route_id] = routeBuses
+          }
+        }
+      }
+    })
+    
+    setBuses(prevBuses => ({ ...prevBuses, ...newBuses }))
+  }, [routePaths])
 
   // Find the closest bus stop to user location
   const findClosestStop = useCallback((userLat, userLng) => {
@@ -310,6 +345,7 @@ function MapScreen() {
       const routeToRecalculate = updatedRoutes.find(r => r.route_id === routeData.route_id)
       if (routeToRecalculate) {
         await calculateRoutePaths([routeToRecalculate])
+        // Buses will be reinitialized automatically when paths are calculated
       }
       
       const success = await saveOSURoutes(updatedRoutes)
@@ -644,6 +680,75 @@ function MapScreen() {
 
     updateClosestStopPath()
   }, [userLocation, stops, findClosestStop])
+  
+  // Update bus positions periodically
+  useEffect(() => {
+    // Clear existing interval
+    if (busUpdateIntervalRef.current) {
+      clearInterval(busUpdateIntervalRef.current)
+    }
+    
+    // Only start updating if there are buses
+    const hasBuses = Object.values(buses).some(routeBuses => routeBuses && routeBuses.length > 0)
+    
+    if (hasBuses) {
+      busUpdateIntervalRef.current = setInterval(() => {
+        setBuses(prevBuses => {
+          const updatedBuses = { ...prevBuses }
+          
+          Object.keys(updatedBuses).forEach(routeId => {
+            const route = routes.find(r => r.route_id === routeId)
+            const path = routePaths[routeId]
+            
+            if (route && path && path.length >= 2 && updatedBuses[routeId]) {
+              updatedBuses[routeId] = updateBusPositions(updatedBuses[routeId], path)
+            }
+          })
+          
+          return updatedBuses
+        })
+      }, 1000) // Update every second
+    }
+    
+    return () => {
+      if (busUpdateIntervalRef.current) {
+        clearInterval(busUpdateIntervalRef.current)
+      }
+    }
+  }, [buses, routes, routePaths])
+  
+  // Reinitialize buses when route paths change
+  useEffect(() => {
+    if (Object.keys(routePaths).length > 0 && routes.length > 0) {
+      initializeBusesForRoutes(routes)
+    }
+  }, [routePaths, routes, initializeBusesForRoutes])
+  
+  // Save bus positions to Firebase periodically
+  useEffect(() => {
+    const saveBusesToFirebase = async () => {
+      try {
+        for (const [routeId, routeBuses] of Object.entries(buses)) {
+          if (routeBuses && routeBuses.length > 0) {
+            // Save each bus to Firebase
+            for (const bus of routeBuses) {
+              await saveBusToFirebase({
+                ...bus,
+                routeId
+              })
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error saving buses to Firebase:', error)
+      }
+    }
+    
+    // Save buses every 5 seconds
+    const saveInterval = setInterval(saveBusesToFirebase, 5000)
+    
+    return () => clearInterval(saveInterval)
+  }, [buses])
 
 
   if (loading) {
@@ -941,6 +1046,44 @@ function MapScreen() {
                 </Popup>
               </Marker>
               )
+            })}
+            
+            {/* Render bus markers */}
+            {Object.entries(buses).map(([routeId, routeBuses]) => {
+              const route = routes.find(r => r.route_id === routeId)
+              const path = routePaths[routeId]
+              
+              if (!route || !path || !routeBuses) return null
+              
+              return routeBuses.map((bus) => {
+                if (!bus.lat || !bus.lng) return null
+                
+                const rotation = getBusRotation(bus, path)
+                const BusIcon = L.divIcon({
+                  className: 'bus-marker',
+                  html: `<div class="bus-icon" style="transform: rotate(${rotation}deg); background-color: ${route.color || '#FF6600'}">
+                    <span>🚌</span>
+                  </div>`,
+                  iconSize: [30, 30],
+                  iconAnchor: [15, 15]
+                })
+                
+                return (
+                  <Marker
+                    key={bus.id}
+                    position={[bus.lat, bus.lng]}
+                    icon={BusIcon}
+                  >
+                    <Popup>
+                      <div className="bus-popup">
+                        <h3>🚌 Bus on {route.name}</h3>
+                        <p>Direction: {bus.direction === 'forward' ? 'Forward' : 'Reverse'}</p>
+                        <p>Speed: ~{Math.round(bus.speed * 3.6)} km/h</p>
+                      </div>
+                    </Popup>
+                  </Marker>
+                )
+              })
             })}
           </MapContainer>
         </div>
