@@ -207,7 +207,7 @@
 .course-name {
   margin: 0 0 0.75rem 0;
   color: var(--text-secondary);
-  font-style: italic;
+  font-style: italic !important;
 }
 
 .class-details {

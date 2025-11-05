@@ -52,6 +52,26 @@ function calculateDistance(lat1, lng1, lat2, lng2) {
   return R * c
 }
 
+// Calculate total distance along a path (array of coordinates)
+function calculatePathDistance(path) {
+  if (!path || path.length < 2) return 0
+  
+  let totalDistance = 0
+  for (let i = 0; i < path.length - 1; i++) {
+    const [lat1, lng1] = path[i]
+    const [lat2, lng2] = path[i + 1]
+    totalDistance += calculateDistance(lat1, lng1, lat2, lng2)
+  }
+  return totalDistance
+}
+
+// Calculate walking time in minutes based on distance in meters
+// Average walking speed is approximately 5 km/h = 1.39 m/s = 83.33 meters/minute
+function calculateWalkingTime(distanceMeters) {
+  const WALKING_SPEED_METERS_PER_MINUTE = 83.33 // ~5 km/h
+  return Math.ceil(distanceMeters / WALKING_SPEED_METERS_PER_MINUTE)
+}
+
 // Component to center map on location and set bounds
 function MapController({ center, zoom, bounds, userLocation, shouldCenterOnUser }) {
   const map = useMap()
@@ -119,6 +139,7 @@ function MapScreen() {
   // Closest bus stop state
   const [closestStop, setClosestStop] = useState(null)
   const [pathToClosestStop, setPathToClosestStop] = useState([])
+  const [walkingTimeMinutes, setWalkingTimeMinutes] = useState(null)
   
   // State to trigger map centering
   const [shouldCenterOnUser, setShouldCenterOnUser] = useState(0)
@@ -577,6 +598,7 @@ function MapScreen() {
       if (!userLocation || !userLocation.lat || !userLocation.lng || !stops || stops.length === 0) {
         setClosestStop(null)
         setPathToClosestStop([])
+        setWalkingTimeMinutes(null)
         return
       }
 
@@ -593,18 +615,30 @@ function MapScreen() {
             { lat: closest.lat, lng: stopLng }
           )
           setPathToClosestStop(path)
+          
+          // Calculate walking distance and time
+          const walkingDistance = calculatePathDistance(path)
+          const walkingTime = calculateWalkingTime(walkingDistance)
+          setWalkingTimeMinutes(walkingTime)
         } catch (error) {
           console.error('Error calculating path to closest stop:', error)
           // Fallback to straight line
           const stopLng = closest.lon !== undefined ? closest.lon : closest.lng
-          setPathToClosestStop([
+          const fallbackPath = [
             [userLocation.lat, userLocation.lng],
             [closest.lat, stopLng]
-          ])
+          ]
+          setPathToClosestStop(fallbackPath)
+          
+          // Calculate walking time for fallback path
+          const walkingDistance = calculatePathDistance(fallbackPath)
+          const walkingTime = calculateWalkingTime(walkingDistance)
+          setWalkingTimeMinutes(walkingTime)
         }
       } else {
         setClosestStop(null)
         setPathToClosestStop([])
+        setWalkingTimeMinutes(null)
       }
     }
 
@@ -654,6 +688,14 @@ function MapScreen() {
           <div>
             <h1>OSU Bus Map {userRole === "admin" && !viewAsUser && <span className="admin-badge">Admin</span>}</h1>
             <p>Track buses and view OSU routes</p>
+            {userLocation && closestStop && walkingTimeMinutes !== null && (
+              <div className="walking-time-estimate">
+                <span className="walking-time-icon">🚶</span>
+                <span className="walking-time-text">
+                  {walkingTimeMinutes} {walkingTimeMinutes === 1 ? 'minute' : 'minutes'} walk to nearest stop
+                </span>
+              </div>
+            )}
           </div>
           {/* Route stops dropdown */}
           {selectedRoute && (() => {
