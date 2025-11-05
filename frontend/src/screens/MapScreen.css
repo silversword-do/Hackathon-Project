@@ -9,6 +9,28 @@
   margin-bottom: 1.5rem;
 }
 
+.walking-time-estimate {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding: 0.5rem 1rem;
+  background: var(--surface);
+  border: 2px solid var(--primary-color);
+  border-radius: 0.5rem;
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.walking-time-icon {
+  font-size: 1.2rem;
+}
+
+.walking-time-text {
+  color: var(--text-primary);
+}
+
 .map-header-top {
   display: flex;
   justify-content: space-between;
